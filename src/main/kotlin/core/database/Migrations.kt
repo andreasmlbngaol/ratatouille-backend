@@ -1,11 +1,14 @@
 package com.sukakotlin.core.database
 
-val migrations = listOf<Migration>(
-//    Migration(1) {
-//        SchemaUtils.create(
-//            Users
-//        )
-//    },
+import com.sukakotlin.features.user.data.UsersTable
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+
+val migrations = listOf(
+    Migration(1) {
+        SchemaUtils.create(
+            UsersTable
+        )
+    },
 //    Migration(2) {
 //        SchemaUtils.create(
 //            Bookmarks,
