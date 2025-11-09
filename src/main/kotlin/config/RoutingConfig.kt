@@ -13,7 +13,7 @@ fun Application.configureRouting() {
         get("/") { call.respondRedirect("/api") }
         route("/api") {
             get {
-                call.respondText("Hello World!")
+                call.respondText("Hello from Ratatouille Backend, this API is being used in Ratatouille Mobile App in https://github.com/andreasmlbngaol/ratatouille-flutter!")
             }
             userRoutes()
         }
