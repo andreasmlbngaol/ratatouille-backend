@@ -4,4 +4,8 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
     }
+
+    versionCatalogs {
+        create("libs")
+    }
 }

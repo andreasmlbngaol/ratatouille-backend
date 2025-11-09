@@ -50,7 +50,15 @@ dependencies {
     implementation(libs.ktor.client.logging)
 
     implementation(libs.webp.image.io)
+    implementation(libs.koin.ktor)
+    implementation(libs.slf4j)
 
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+}
+
+tasks.withType<Test> {
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
