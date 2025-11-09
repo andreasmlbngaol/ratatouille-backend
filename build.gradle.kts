@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.webp.image.io)
     implementation(libs.koin.ktor)
     implementation(libs.slf4j)
+    implementation(libs.dotenv)
 
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
