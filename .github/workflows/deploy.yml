@@ -23,5 +23,6 @@ jobs:
             cd ~/ktor/ratatouille-backend
             git fetch origin master
             git reset --hard origin/master
+            sudo chmod +x ./gradlew
             ./gradlew clean shadowJar
             sudo systemctl restart ratatouille-backend
