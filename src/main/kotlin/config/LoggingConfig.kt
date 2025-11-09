@@ -15,7 +15,7 @@ fun Application.configureLogging() {
             val path = call.request.uri
             val status = call.response.status()
             val auth = call.request.headers["Authorization"]
-            val ip = call.request.origin.remoteHost
+            val ip = call.request.headers["X-Forwarded-For"] ?: call.request.origin.remoteHost
 
             "[$ip] $method $path -> $status\n\tAuthorization: $auth"
         }
