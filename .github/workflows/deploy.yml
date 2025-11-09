@@ -25,4 +25,5 @@ jobs:
             git reset --hard origin/master
             sudo chmod +x ./gradlew
             ./gradlew shadowJar
+            ./gradlew --stop
             sudo systemctl restart ratatouille-backend
