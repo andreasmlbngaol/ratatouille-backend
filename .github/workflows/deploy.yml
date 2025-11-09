@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Connect to VPS and Deploy
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
@@ -24,5 +24,5 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
             sudo chmod +x ./gradlew
-            ./gradlew shadowJar -i
+            ./gradlew shadowJar
             sudo systemctl restart ratatouille-backend
