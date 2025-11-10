@@ -11,9 +11,9 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     configureEnvironment()
+    configureKoin()
     DatabaseFactory.init(environment.config)
     configureFirebase()
-    configureKoin()
     configureSerialization()
     configureSecurity()
     configureExceptionHandling()

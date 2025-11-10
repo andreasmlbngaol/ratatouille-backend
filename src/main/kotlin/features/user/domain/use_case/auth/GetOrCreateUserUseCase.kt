@@ -5,6 +5,7 @@ import com.sukakotlin.features.user.domain.repository.UsersRepository
 import com.sukakotlin.features.user.domain.service.AuthService
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.slf4j.LoggerFactory
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -17,6 +18,8 @@ class GetOrCreateUserUseCase(
     private val usersRepository: UsersRepository,
     private val authService: AuthService
 ) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
     @OptIn(ExperimentalTime::class)
     suspend operator fun invoke(idToken: String): Result<User> {
         return try {
@@ -47,13 +50,13 @@ class GetOrCreateUserUseCase(
             /**
              * **Buat User baru**
              */
-            val name = tokenVerification.name?.takeIf { it.isNotBlank() }
-                ?: email.split("@").firstOrNull()
-                ?: "Ratatouille User"
+//            val name = tokenVerification.name?.takeIf { it.isNotBlank() }
+//                ?: email.split("@").firstOrNull()
+//                ?: "Ratatouille User"
 
             val newUser = User(
                 id = uid,
-                name = name,
+                name = "",
                 email = email,
                 profilePictureUrl = tokenVerification.pictureUrl,
                 coverPictureUrl = null,
@@ -61,8 +64,10 @@ class GetOrCreateUserUseCase(
                 isEmailVerified = tokenVerification.isEmailVerified,
                 createdAt = Clock.System.now().toLocalDateTime(TimeZone.of("Asia/Jakarta"))
             )
+            logger.info("New user: $newUser")
 
             val savedUser = usersRepository.save(newUser)
+            logger.info("User created: $savedUser")
             return Result.success(savedUser)
         } catch(e: Exception) {
             Result.failure(e)

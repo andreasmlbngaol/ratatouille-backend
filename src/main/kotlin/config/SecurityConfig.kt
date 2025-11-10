@@ -6,7 +6,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
-import java.io.File
 
 fun Application.configureSecurity() {
     install(Authentication) {
@@ -15,7 +14,6 @@ fun Application.configureSecurity() {
 
             setup {
                 firebaseApp = FirebaseApp.getInstance()
-                adminFile = File("path/to/admin/file.json")
             }
 
             validate { token ->
