@@ -2,6 +2,7 @@ package com.sukakotlin.features.user.data.entity
 
 import com.sukakotlin.data.database.entity.BaseEntityClass
 import com.sukakotlin.data.database.entity.StringBaseEntity
+import com.sukakotlin.features.user.data.table.UsersTable
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 
 class UsersEntity(id: EntityID<String>): StringBaseEntity(id) {

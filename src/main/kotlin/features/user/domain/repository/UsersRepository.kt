@@ -1,7 +1,7 @@
 package com.sukakotlin.features.user.domain.repository
 
 import com.sukakotlin.domain.repository.BaseRepository
-import com.sukakotlin.features.user.domain.model.User
+import com.sukakotlin.features.user.domain.model.auth.User
 
 interface UsersRepository: BaseRepository<String, User> {
     suspend fun save(user: User): User

@@ -1,0 +1,317 @@
+openapi: "3.1.0"
+info:
+  title: "ratatouille_backend API"
+  description: "ratatouille_backend API"
+  version: "1.0.0"
+servers:
+  - url: "https://ratatouille_backend"
+paths:
+  /:
+    get:
+      description: ""
+      responses:
+        "302":
+          description: "Found <br> Redirect"
+          content:
+            text/plain:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "/api"
+  /api:
+    get:
+      description: ""
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+  /api/users/{userId}:
+    delete:
+      description: ""
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+    get:
+      description: ""
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+    post:
+      description: ""
+      parameters:
+        - name: "userId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+  /api/users/me:
+    get:
+      description: ""
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+    patch:
+      description: ""
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+  /api/users/me/cover-picture:
+    post:
+      description: ""
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+  /api/users/me/profile-picture:
+    post:
+      description: ""
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+components:
+  schemas:
+    JsonElement:
+      type: "object"
+      properties: { }
+    ApiResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          nullable: true
+          $ref: "#/components/schemas/JsonElement"
+      required:
+        - "success"
+    UpdateProfileRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          nullable: true
+        bio:
+          type: "string"
+          nullable: true

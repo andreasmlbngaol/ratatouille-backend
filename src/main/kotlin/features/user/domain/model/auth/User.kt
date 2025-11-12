@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.domain.model
+package com.sukakotlin.features.user.domain.model.auth
 
 import kotlinx.datetime.LocalDateTime
 

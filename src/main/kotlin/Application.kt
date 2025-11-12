@@ -18,5 +18,6 @@ fun Application.module() {
     configureSecurity()
     configureExceptionHandling()
     configureLogging()
+    configureCors()
     configureRouting()
 }

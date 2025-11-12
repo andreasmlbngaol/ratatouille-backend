@@ -1,7 +1,6 @@
-package com.sukakotlin.features.user.data.entity
+package com.sukakotlin.features.user.data.table
 
 import com.sukakotlin.data.database.table.StringBaseTable
-
 
 object UsersTable: StringBaseTable("users") {
     val name = varchar("name", 100)

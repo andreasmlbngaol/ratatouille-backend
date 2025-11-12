@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.domain.model
+package com.sukakotlin.features.user.domain.model.auth
 
 data class TokenVerificationResult(
     val isValid: Boolean,

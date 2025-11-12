@@ -46,7 +46,6 @@ abstract class BaseRepositoryImpl<
 
     protected fun saveEntity(id: ID, block: E.() -> Unit) = transaction {
         val test = entityClass.new(id, block)
-        println(test)
         test.toDomain()
     }
 

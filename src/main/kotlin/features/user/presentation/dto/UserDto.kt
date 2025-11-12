@@ -1,5 +1,6 @@
 package com.sukakotlin.features.user.presentation.dto
 
+import com.sukakotlin.features.user.domain.model.auth.User
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -13,4 +14,15 @@ data class UserDto(
     val bio: String?,
     val isEmailVerified: Boolean,
     val createdAt: LocalDateTime
+)
+
+fun User.toDto() = UserDto(
+    id = this.id,
+    name = this.name,
+    email = this.email,
+    profilePictureUrl = this.profilePictureUrl,
+    coverPictureUrl = this.coverPictureUrl,
+    bio = this.bio,
+    isEmailVerified = this.isEmailVerified,
+    createdAt = this.createdAt
 )

@@ -1,7 +1,7 @@
 package com.sukakotlin.features.user.data.service
 
 import com.google.firebase.auth.FirebaseAuth
-import com.sukakotlin.features.user.domain.model.TokenVerificationResult
+import com.sukakotlin.features.user.domain.model.auth.TokenVerificationResult
 import com.sukakotlin.features.user.domain.service.AuthService
 
 class AuthServiceImpl: AuthService {

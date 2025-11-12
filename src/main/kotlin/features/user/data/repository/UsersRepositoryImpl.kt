@@ -3,9 +3,9 @@ package com.sukakotlin.features.user.data.repository
 import com.sukakotlin.data.database.util.updateWithTimestamps
 import com.sukakotlin.data.repository.BaseRepositoryImpl
 import com.sukakotlin.features.user.data.entity.UsersEntity
-import com.sukakotlin.features.user.data.entity.UsersTable
+import com.sukakotlin.features.user.data.table.UsersTable
 import com.sukakotlin.features.user.domain.repository.UsersRepository
-import com.sukakotlin.features.user.domain.model.User
+import com.sukakotlin.features.user.domain.model.auth.User
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 object UsersRepositoryImpl:

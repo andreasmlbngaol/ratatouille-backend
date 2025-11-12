@@ -1,6 +1,6 @@
 package com.sukakotlin.features.user.domain.use_case.auth
 
-import com.sukakotlin.features.user.domain.model.User
+import com.sukakotlin.features.user.domain.model.auth.User
 import com.sukakotlin.features.user.domain.repository.UsersRepository
 import com.sukakotlin.features.user.domain.service.AuthService
 import kotlinx.datetime.TimeZone
@@ -50,15 +50,12 @@ class GetOrCreateUserUseCase(
             /**
              * **Buat User baru**
              */
-//            val name = tokenVerification.name?.takeIf { it.isNotBlank() }
-//                ?: email.split("@").firstOrNull()
-//                ?: "Ratatouille User"
 
             val newUser = User(
                 id = uid,
                 name = "",
                 email = email,
-                profilePictureUrl = tokenVerification.pictureUrl,
+                profilePictureUrl = null,
                 coverPictureUrl = null,
                 bio = null,
                 isEmailVerified = tokenVerification.isEmailVerified,

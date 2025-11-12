@@ -39,6 +39,7 @@ mockk = "1.14.6"
 coroutines-test = "1.10.2"
 koin-slf4j = "3.5.6"
 dotenv = "6.5.1"
+swagger = "1.0.59"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -74,6 +75,11 @@ ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", versio
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-server-html-builder = { module = "io.ktor:ktor-server-html-builder", version.ref = "ktor" }
 ktor-server-double-receive = { module = "io.ktor:ktor-server-double-receive", version.ref = "ktor" }
+ktor-server-openapi = { module = "io.ktor:ktor-server-openapi", version.ref = "ktor" }
+ktor-server-swagger = { module = "io.ktor:ktor-server-swagger", version.ref = "ktor" }
+ktor-server-resources = { module = "io.ktor:ktor-server-resources", version.ref = "ktor" }
+ktor-server-default-headers = { module = "io.ktor:ktor-server-default-headers", version.ref = "ktor" }
+swagger-codegen = { module = "io.swagger.codegen.v3:swagger-codegen-generators", version.ref = "swagger" }
 ktor-server-firebase-auth = { module = "com.kborowy:firebase-auth-provider", version.ref = "ktor-firebase-auth"}
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
 

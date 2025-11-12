@@ -1,6 +1,6 @@
 package com.sukakotlin.data.database.migration
 
-import com.sukakotlin.features.user.data.entity.UsersTable
+import com.sukakotlin.features.user.data.table.UsersTable
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 
 val migrations = listOf(
