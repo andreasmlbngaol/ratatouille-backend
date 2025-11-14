@@ -4,16 +4,15 @@ import com.sukakotlin.features.user.presentation.routes.userRoutes
 import com.sukakotlin.presentation.util.emptySuccessResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.io.File
 
 fun Application.configureRouting() {
-//    install(DefaultHeaders) {
-//        header(HttpHeaders.ContentType, "application/json")
-//    }
-
     routing {
         configureDocumentation()
+        staticFiles("/uploads", File("/var/www/uploads"))
 
         get("/") { call.respondRedirect("/api") }
         route("/api") {

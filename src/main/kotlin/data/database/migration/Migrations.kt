@@ -1,5 +1,6 @@
 package com.sukakotlin.data.database.migration
 
+import com.sukakotlin.features.user.data.table.FollowsTable
 import com.sukakotlin.features.user.data.table.UsersTable
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 
@@ -9,6 +10,11 @@ val migrations = listOf(
             UsersTable
         )
     },
+    Migration(2) {
+        SchemaUtils.create(
+            FollowsTable
+        )
+    }
 //    Migration(2) {
 //        SchemaUtils.create(
 //            Bookmarks,

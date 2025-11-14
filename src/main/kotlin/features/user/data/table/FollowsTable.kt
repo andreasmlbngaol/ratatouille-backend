@@ -9,7 +9,5 @@ object FollowsTable: LongBaseTable("follows") {
 
     init {
         uniqueIndex(followerId, followingId)
-        index(false,followerId)
-        index(false, followerId)
     }
 }
