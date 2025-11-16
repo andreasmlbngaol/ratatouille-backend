@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.presentation.dto
+package com.sukakotlin.features.user.presentation.dto.request
 
 import kotlinx.serialization.Serializable
 

@@ -1,12 +1,10 @@
 package com.sukakotlin.presentation.model
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-
 
 @Serializable
-data class ApiResponse(
-    val success: Boolean,
+data class FailureResponse(
+    val success: Boolean = false,
     val message: String? = null,
-    val data: JsonElement? = null
+    val data: Nothing? = null
 )

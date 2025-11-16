@@ -20,7 +20,7 @@ fun Application.configureRouting() {
                 call.respond(
                     HttpStatusCode.OK,
                     emptySuccessResponse(
-                        "Hello from Ratatouille Backend, this API is being used in Ratatouille Mobile App in https://github.com/andreasmlbngaol/ratatouille-flutter!"
+                        "Hello from Ratatouille Backend, this API is being used in Ratatouille Mobile App in https://github.com/andreasmlbngaol/ratatouille!"
                     )
                 )
             }

@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.presentation.dto
+package com.sukakotlin.features.user.presentation.dto.response
 
 import com.sukakotlin.features.user.domain.model.social.UserDetail
 import kotlinx.serialization.Serializable
@@ -12,6 +12,13 @@ data class UserDetailDto(
     val followingCount: Long
 )
 
+@Serializable
+data class UserDetailResponse(
+    val success: Boolean = true,
+    val message: String? = null,
+    val data: UserDetailDto
+)
+
 fun UserDetail.toDto() = UserDetailDto(
     user = user.toDto(),
     isMe = isMe,
@@ -19,3 +26,5 @@ fun UserDetail.toDto() = UserDetailDto(
     followerCount = followerCount,
     followingCount = followingCount
 )
+
+fun UserDetail.toResponse() = UserDetailResponse(data = this.toDto())

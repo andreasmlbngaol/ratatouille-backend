@@ -6,15 +6,15 @@ import com.sukakotlin.features.user.domain.use_case.profile.UpdateUserPictureUse
 import com.sukakotlin.features.user.domain.use_case.profile.UpdateUserProfileUseCase
 import com.sukakotlin.features.user.domain.use_case.social.FollowUserUseCase
 import com.sukakotlin.features.user.domain.use_case.social.GetUserDetailUseCase
-import com.sukakotlin.features.user.presentation.dto.UpdateProfileRequest
-import com.sukakotlin.features.user.presentation.dto.toDto
+import com.sukakotlin.features.user.presentation.dto.request.UpdateProfileRequest
+import com.sukakotlin.features.user.presentation.dto.response.toResponse
 import com.sukakotlin.features.user.presentation.util.idToken
 import com.sukakotlin.features.user.presentation.util.userId
 import com.sukakotlin.presentation.util.failureResponse
-import com.sukakotlin.presentation.util.respondResult
+import com.sukakotlin.presentation.util.respondFailure
 import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -36,7 +36,10 @@ fun Route.userRoutes() {
 
                     val result = getOrCreateUser(idToken)
 
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
 
                 patch {
@@ -45,7 +48,10 @@ fun Route.userRoutes() {
 
                     val result = updateProfileUseCase(idToken, payload.name,payload.bio)
 
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
 
                 post("/profile-picture") {
@@ -58,7 +64,10 @@ fun Route.userRoutes() {
 
                     val result = updatePictureUseCase.updateProfilePicture(idToken, imageData)
 
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
 
                 post("/cover-picture") {
@@ -71,7 +80,10 @@ fun Route.userRoutes() {
 
                     val result = updatePictureUseCase.updateCoverPicture(idToken, imageData)
 
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
             }
             route("/{userId}") {
@@ -85,7 +97,10 @@ fun Route.userRoutes() {
 
                     val result = getUserDetailUseCase(targetUserId, currentUserId)
 
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
 
                 post {
@@ -97,7 +112,10 @@ fun Route.userRoutes() {
                         )
 
                     val result = followUserUseCase.follow(currentUserId, targetUserId)
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
 
                 delete {
@@ -109,13 +127,17 @@ fun Route.userRoutes() {
                         )
 
                     val result = followUserUseCase.unfollow(currentUserId, targetUserId)
-                    call.respondResult(result) { it.toDto() }
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
                 }
             }
         }
     }
 }
 
+@Suppress("DEPRECATION")
 private suspend fun extractImageFromMultipart(call: ApplicationCall): ImageData? {
     val multipartData = call.receiveMultipart()
     var imageData: ImageData? = null

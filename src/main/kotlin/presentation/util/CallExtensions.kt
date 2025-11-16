@@ -10,26 +10,25 @@ suspend inline fun <reified T: Any> ApplicationCall.respondResult(
     crossinline transform: (T) -> Any = { it }
 ) {
     result.fold(
-        onSuccess = { data ->
-            respond(successStatusCode, successResponse(data = transform(data)))
-        },
-        onFailure = { error ->
-            when(error) {
-                is IllegalArgumentException -> respond(
-                    HttpStatusCode.BadRequest,
-                    failureResponse(error.message ?: "Bad Request")
-                )
-                is NoSuchElementException -> respond(
-                    HttpStatusCode.NotFound,
-                    failureResponse(error.message ?: "Resource Not Found")
-                )
-                is IllegalStateException -> respond(
-                    HttpStatusCode.Conflict,
-                    failureResponse(error.message ?: "Conflict")
-                )
-                else -> throw error
-            }
-
-        }
+        onSuccess = { data -> respond(successStatusCode, transform(data)) },
+        onFailure = { error -> respondFailure(error) }
     )
+}
+
+suspend fun ApplicationCall.respondFailure(error: Throwable) {
+    when(error) {
+        is IllegalArgumentException -> respond(
+            HttpStatusCode.BadRequest,
+            failureResponse(error.message ?: "Bad Request")
+        )
+        is NoSuchElementException -> respond(
+            HttpStatusCode.NotFound,
+            failureResponse(error.message ?: "Resource Not Found")
+        )
+        is IllegalStateException -> respond(
+            HttpStatusCode.Conflict,
+            failureResponse(error.message ?: "Conflict")
+        )
+        else -> throw error
+    }
 }

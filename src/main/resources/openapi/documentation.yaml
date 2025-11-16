@@ -28,7 +28,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/EmptySuccessResponse"
   /api/users/{userId}:
     delete:
       description: ""
@@ -44,31 +44,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserDetailResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
     get:
       description: ""
       parameters:
@@ -83,31 +83,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserDetailResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
     post:
       description: ""
       parameters:
@@ -122,31 +122,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserDetailResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
   /api/users/me:
     get:
       description: ""
@@ -156,31 +156,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserResponse"
         "400":
           description: "Bad Request"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
     patch:
       description: ""
       requestBody:
@@ -195,31 +195,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserResponse"
         "400":
           description: "Bad Request"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
   /api/users/me/cover-picture:
     post:
       description: ""
@@ -229,31 +229,31 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
   /api/users/me/profile-picture:
     post:
       description: ""
@@ -263,37 +263,37 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "500":
           description: "Internal Server Error <br> ✅ Print full stack trace"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "200":
           description: "OK"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/UserResponse"
         "404":
           description: "Not Found"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
         "409":
           description: "Conflict"
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: "#/components/schemas/FailureResponse"
 components:
   schemas:
-    JsonElement:
+    Void:
       type: "object"
       properties: { }
-    ApiResponse:
+    FailureResponse:
       type: "object"
       properties:
         success:
@@ -303,9 +303,98 @@ components:
           nullable: true
         data:
           nullable: true
-          $ref: "#/components/schemas/JsonElement"
+          $ref: "#/components/schemas/Void"
       required:
         - "success"
+    EmptySuccessResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          nullable: true
+          $ref: "#/components/schemas/Void"
+      required:
+        - "success"
+    UserDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        name:
+          type: "string"
+        email:
+          type: "string"
+        profilePictureUrl:
+          type: "string"
+          nullable: true
+        coverPictureUrl:
+          type: "string"
+          nullable: true
+        bio:
+          type: "string"
+          nullable: true
+        isEmailVerified:
+          type: "boolean"
+        createdAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - "id"
+        - "name"
+        - "email"
+        - "isEmailVerified"
+        - "createdAt"
+    UserDetailDto:
+      type: "object"
+      properties:
+        user:
+          $ref: "#/components/schemas/UserDto"
+        isMe:
+          type: "boolean"
+        isFollowing:
+          type: "boolean"
+        followerCount:
+          type: "integer"
+          format: "int64"
+        followingCount:
+          type: "integer"
+          format: "int64"
+      required:
+        - "user"
+        - "isMe"
+        - "isFollowing"
+        - "followerCount"
+        - "followingCount"
+    UserDetailResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          $ref: "#/components/schemas/UserDetailDto"
+      required:
+        - "success"
+        - "data"
+    UserResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          $ref: "#/components/schemas/UserDto"
+      required:
+        - "success"
+        - "data"
     UpdateProfileRequest:
       type: "object"
       properties:

@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.presentation.dto
+package com.sukakotlin.features.user.presentation.dto.response
 
 import com.sukakotlin.features.user.domain.model.auth.User
 import kotlinx.datetime.LocalDateTime
@@ -16,6 +16,13 @@ data class UserDto(
     val createdAt: LocalDateTime
 )
 
+@Serializable
+data class UserResponse(
+    val success: Boolean = true,
+    val message: String? = null,
+    val data: UserDto
+)
+
 fun User.toDto() = UserDto(
     id = this.id,
     name = this.name,
@@ -26,3 +33,5 @@ fun User.toDto() = UserDto(
     isEmailVerified = this.isEmailVerified,
     createdAt = this.createdAt
 )
+
+fun User.toResponse() = UserResponse(data = this.toDto())
