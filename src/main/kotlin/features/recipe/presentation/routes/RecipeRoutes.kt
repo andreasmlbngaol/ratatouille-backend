@@ -1,0 +1,244 @@
+package com.sukakotlin.features.recipe.presentation.routes
+
+import com.sukakotlin.features.recipe.domain.use_case.GetOrCreateDraftRecipeUseCase
+import com.sukakotlin.features.recipe.domain.use_case.base.UpdateRecipeUseCase
+import com.sukakotlin.features.recipe.domain.use_case.base.UploadRecipeImageUseCase
+import com.sukakotlin.features.recipe.domain.use_case.ingredients.CreateIngredientTagUseCase
+import com.sukakotlin.features.recipe.domain.use_case.ingredients.GetIngredientTagUseCase
+import com.sukakotlin.features.recipe.domain.use_case.ingredients.UpdateIngredientUseCase
+import com.sukakotlin.features.recipe.domain.use_case.steps.CreateEmptyStepUseCase
+import com.sukakotlin.features.recipe.domain.use_case.steps.UpdateStepUseCase
+import com.sukakotlin.features.recipe.domain.use_case.steps.UploadStepImageUseCase
+import com.sukakotlin.features.recipe.presentation.dto.request.CreateStepRequest
+import com.sukakotlin.features.recipe.presentation.dto.request.IngredientTagRequest
+import com.sukakotlin.features.recipe.presentation.dto.request.UpdateIngredientsRequest
+import com.sukakotlin.features.recipe.presentation.dto.request.UpdateRecipeRequest
+import com.sukakotlin.features.recipe.presentation.dto.request.UpdateStepRequest
+import com.sukakotlin.features.recipe.presentation.dto.response.toResponse
+import com.sukakotlin.features.user.presentation.routes.extractImageFromMultipart
+import com.sukakotlin.presentation.util.failureResponse
+import com.sukakotlin.presentation.util.respondFailure
+import com.sukakotlin.presentation.util.userId
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.authenticate
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import org.koin.ktor.ext.inject
+
+fun Route.recipeRoutes() {
+    val getOrCreateDraftRecipe: GetOrCreateDraftRecipeUseCase by inject()
+    val uploadRecipeImage: UploadRecipeImageUseCase by inject()
+    val updateRecipeBaseInfo: UpdateRecipeUseCase by inject()
+    val getIngredientTag: GetIngredientTagUseCase by inject()
+    val createIngredientTag: CreateIngredientTagUseCase by inject()
+    val updateIngredient: UpdateIngredientUseCase by inject()
+    val createEmptyStep: CreateEmptyStepUseCase by inject()
+    val uploadStepImage: UploadStepImageUseCase by inject()
+    val updateStep: UpdateStepUseCase by inject()
+
+    authenticate("firebase-auth") {
+        route("/recipes") {
+            get("/draft") {
+                val userId = call.userId!!
+                val result = getOrCreateDraftRecipe(userId)
+                result.fold(
+                    onSuccess = { call.respond(it.toResponse()) },
+                    onFailure = { call.respondFailure(it) }
+                )
+            }
+
+            route("/{recipeId}") {
+                patch {
+                    val userId = call.userId!!
+                    val recipeId = call.recipeId
+                        ?: return@patch call.respond(
+                            HttpStatusCode.BadRequest,
+                            failureResponse("Invalid recipeId")
+                        )
+                    val payload = call.receive<UpdateRecipeRequest>()
+
+                    val result = updateRecipeBaseInfo(
+                        userId = userId,
+                        recipeId = recipeId,
+                        name = payload.name,
+                        description = payload.description,
+                        isPublic = payload.isPublic,
+                        estTimeInMinutes = payload.estTimeInMinutes,
+                        portion = payload.portion,
+                        status = null
+                    )
+
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
+                post("/picture") {
+                    val userId = call.userId!!
+                    val recipeId = call.parameters["recipeId"]
+                        ?.toLongOrNull()
+                        ?: return@post call.respond(
+                            HttpStatusCode.BadRequest,
+                            failureResponse("Invalid recipeId")
+                        )
+
+                    val imageData = extractImageFromMultipart(call)
+                        ?: return@post call.respond(
+                            HttpStatusCode.BadRequest,
+                            failureResponse("Missing image")
+                        )
+
+                    val result = uploadRecipeImage(userId, recipeId, imageData)
+
+                    result.fold(
+                        onSuccess = { images ->
+                            call.respond(images.map { it.toResponse() })
+                        },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
+
+                route("/ingredients") {
+                    patch {
+                        val userId = call.userId!!
+                        val recipeId = call.recipeId
+                            ?: return@patch call.respond(
+                                HttpStatusCode.BadRequest,
+                                failureResponse("Invalid recipeId")
+                            )
+                        val payload = call.receive<UpdateIngredientsRequest>()
+
+                        val result = updateIngredient(
+                            userId,
+                            recipeId,
+                            payload.tagId,
+                            payload.amount,
+                            payload.unit,
+                            payload.alternative
+                        )
+
+                        result.fold(
+                            onSuccess = { ingredients ->
+                                call.respond(ingredients.map { it.toResponse() })
+                            },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+                }
+
+                route("/steps") {
+                    post {
+                        val userId = call.userId!!
+                        val recipeId = call.recipeId
+                            ?: return@post call.respond(
+                                HttpStatusCode.BadRequest,
+                                failureResponse("Invalid recipeId")
+                            )
+                        val payload = call.receive<CreateStepRequest>()
+                        val result = createEmptyStep(userId, recipeId, payload.stepNumber)
+
+                        result.fold(
+                            onSuccess = { step ->
+                                call.respond(step.map { it.toResponse() })
+                            },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+
+                    route("/{stepId}") {
+                        patch {
+                            val userId = call.userId!!
+                            val recipeId = call.recipeId
+                                ?: return@patch call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    failureResponse("Invalid recipeId")
+                                )
+                            val stepId = call.parameters["stepId"]
+                                ?.toLongOrNull()
+                                ?: return@patch call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    failureResponse("Invalid stepId")
+                                )
+                            val payload = call.receive<UpdateStepRequest>()
+                            val result = updateStep(
+                                userId,
+                                recipeId,
+                                stepId,
+                                payload.content
+                            )
+
+                            result.fold(
+                                onSuccess = { steps ->
+                                    call.respond(steps.map { it.toResponse() })
+                                },
+                                onFailure = { call.respondFailure(it) }
+                            )
+                        }
+                        post("/picture") {
+                            val userId = call.userId!!
+                            val recipeId = call.recipeId
+                                ?: return@post call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    failureResponse("Invalid recipeId")
+                                )
+                            val stepId = call.parameters["stepId"]
+                                ?.toLongOrNull()
+                                ?: return@post call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    failureResponse("Invalid stepId")
+                                )
+
+                            val imageData = extractImageFromMultipart(call)
+                                ?: return@post call.respond(
+                                    HttpStatusCode.BadRequest,
+                                    failureResponse("Missing image")
+                                )
+
+                            val result = uploadStepImage(userId, recipeId, stepId, imageData)
+
+                            result.fold(
+                                onSuccess = { images ->
+                                    call.respond(images.map { it.toResponse() })
+                                },
+                                onFailure = { call.respondFailure(it) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            route("/ingredient-tags") {
+                get {
+                    val payload = call.receive<IngredientTagRequest>()
+                    val result = getIngredientTag(payload.name)
+
+                    result.fold(
+                        onSuccess = { tags ->
+                            call.respond(tags.map { it.toResponse() })
+                        },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
+                post {
+                    val payload = call.receive<IngredientTagRequest>()
+                    val result = createIngredientTag(payload.name)
+
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse()) },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val ApplicationCall.recipeId
+    get() = this.parameters["recipeId"]
+        ?.toLongOrNull()

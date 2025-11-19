@@ -1,5 +1,6 @@
 package com.sukakotlin.config
 
+import com.sukakotlin.features.recipe.presentation.routes.recipeRoutes
 import com.sukakotlin.features.user.presentation.routes.userRoutes
 import com.sukakotlin.presentation.util.emptySuccessResponse
 import io.ktor.http.*
@@ -25,6 +26,7 @@ fun Application.configureRouting() {
                 )
             }
             userRoutes()
+            recipeRoutes()
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.sukakotlin.features.user.data.service
 
-import com.sukakotlin.features.user.domain.model.profile.ImageData
+import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.user.domain.service.ImageUploadPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,7 +17,7 @@ class LocalFileImageUploadAdapter(
 ): ImageUploadPort {
     private val logger = org.slf4j.LoggerFactory.getLogger(this::class.java)
 
-    private suspend fun uploadImage(
+    private suspend fun uploadProfileImage(
         userId: String,
         imageData: ImageData,
         type: String,
@@ -26,27 +26,73 @@ class LocalFileImageUploadAdapter(
         try {
             val fileName = "$type-${System.currentTimeMillis()}.webp"
             val userDir = File(uploadDir, userId)
-
-            if (!userDir.exists()) {
-                val created = userDir.mkdirs()
-                if (!created) {
-                    throw IOException("Failed to create directory: ${userDir.absolutePath}")
-                }
-                logger.debug("Directory created: ${userDir.absolutePath}")
-            }
-
+            createDir(userDir)
             val file = File(userDir, fileName)
 
             convertToWebP(imageData.content, file, quality)
 
-            logger.debug("Image uploaded: /uploads/images/$userId/$fileName")
-            return@withContext "/uploads/images/$userId/$fileName"
+            val absolutePath = "/uploads/images/$userId/$fileName"
+
+            logger.debug("Image uploaded: $absolutePath")
+            return@withContext absolutePath
         } catch(e: Exception) {
             logger.error("Failed to upload image for user: $userId", e)
             throw e
         }
     }
 
+    override suspend fun uploadRecipeImage(
+        userId: String,
+        recipeId: Long,
+        imageData: ImageData
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val fileName = "recipe-${System.currentTimeMillis()}.webp"
+            val userDir = File(uploadDir, "$userId/$recipeId")
+            createDir(userDir)
+            val file = File(userDir, fileName)
+            convertToWebP(imageData.content, file, 0.7f)
+
+            val absolutePath = "/uploads/images/$userId/$recipeId/$fileName"
+            logger.debug("Image uploaded: $absolutePath")
+            return@withContext absolutePath
+        } catch (e: Exception) {
+            logger.error("Failed to upload recipe image for user: $userId, recipe: $recipeId", e)
+            throw e
+        }
+    }
+
+    override suspend fun uploadStepImage(
+        userId: String,
+        recipeId: Long,
+        stepId: Long,
+        imageData: ImageData
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val fileName = "step-${System.currentTimeMillis()}.webp"
+            val userDir = File(uploadDir, "$userId/$recipeId/$stepId")
+            createDir(userDir)
+            val file = File(userDir, fileName)
+            convertToWebP(imageData.content, file, 0.5f)
+
+            val absolutePath = "/uploads/images/$userId/$recipeId/$stepId/$fileName"
+            logger.debug("Image uploaded: $absolutePath")
+            return@withContext  absolutePath
+        } catch (e: Exception) {
+            logger.error("Failed to upload recipe image for user: $userId, recipe: $recipeId", e)
+            throw e
+        }
+    }
+
+    private fun createDir(userDir: File) {
+        if (!userDir.exists()) {
+            val created = userDir.mkdirs()
+            if (!created) {
+                throw IOException("Failed to create directory: ${userDir.absolutePath}")
+            }
+            logger.debug("Directory created: ${userDir.absolutePath}")
+        }
+    }
 
     private fun convertToWebP(
         imageBytes: ByteArray,
@@ -116,10 +162,11 @@ class LocalFileImageUploadAdapter(
     override suspend fun uploadProfilePicture(
         userId: String,
         imageData: ImageData
-    ): String = uploadImage(userId, imageData, "profile", 0.5f)
+    ): String = uploadProfileImage(userId, imageData, "profile", 0.5f)
 
     override suspend fun uploadCoverPicture(
         userId: String,
         imageData: ImageData
-    ): String = uploadImage(userId, imageData, "cover")
+    ): String = uploadProfileImage(userId, imageData, "cover")
+
 }

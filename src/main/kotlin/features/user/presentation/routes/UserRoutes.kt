@@ -1,6 +1,6 @@
 package com.sukakotlin.features.user.presentation.routes
 
-import com.sukakotlin.features.user.domain.model.profile.ImageData
+import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.user.domain.use_case.auth.GetOrCreateUserUseCase
 import com.sukakotlin.features.user.domain.use_case.profile.UpdateUserPictureUseCase
 import com.sukakotlin.features.user.domain.use_case.profile.UpdateUserProfileUseCase
@@ -8,8 +8,8 @@ import com.sukakotlin.features.user.domain.use_case.social.FollowUserUseCase
 import com.sukakotlin.features.user.domain.use_case.social.GetUserDetailUseCase
 import com.sukakotlin.features.user.presentation.dto.request.UpdateProfileRequest
 import com.sukakotlin.features.user.presentation.dto.response.toResponse
-import com.sukakotlin.features.user.presentation.util.idToken
-import com.sukakotlin.features.user.presentation.util.userId
+import com.sukakotlin.presentation.util.idToken
+import com.sukakotlin.presentation.util.userId
 import com.sukakotlin.presentation.util.failureResponse
 import com.sukakotlin.presentation.util.respondFailure
 import io.ktor.http.*
@@ -55,14 +55,14 @@ fun Route.userRoutes() {
                 }
 
                 post("/profile-picture") {
-                    val idToken = call.userId!!
+                    val userId = call.userId!!
                     val imageData = extractImageFromMultipart(call)
                         ?: return@post call.respond(
                             HttpStatusCode.BadRequest,
                             failureResponse("Missing image")
                         )
 
-                    val result = updatePictureUseCase.updateProfilePicture(idToken, imageData)
+                    val result = updatePictureUseCase.updateProfilePicture(userId, imageData)
 
                     result.fold(
                         onSuccess = { call.respond(it.toResponse()) },
@@ -71,14 +71,14 @@ fun Route.userRoutes() {
                 }
 
                 post("/cover-picture") {
-                    val idToken = call.userId!!
+                    val userId = call.userId!!
                     val imageData = extractImageFromMultipart(call)
                         ?: return@post call.respond(
                             HttpStatusCode.BadRequest,
                             failureResponse("Missing image")
                         )
 
-                    val result = updatePictureUseCase.updateCoverPicture(idToken, imageData)
+                    val result = updatePictureUseCase.updateCoverPicture(userId, imageData)
 
                     result.fold(
                         onSuccess = { call.respond(it.toResponse()) },
@@ -138,7 +138,7 @@ fun Route.userRoutes() {
 }
 
 @Suppress("DEPRECATION")
-private suspend fun extractImageFromMultipart(call: ApplicationCall): ImageData? {
+suspend fun extractImageFromMultipart(call: ApplicationCall): ImageData? {
     val multipartData = call.receiveMultipart()
     var imageData: ImageData? = null
 

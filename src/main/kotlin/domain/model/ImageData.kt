@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.domain.model.profile
+package com.sukakotlin.domain.model
 
 data class ImageData(
     val content: ByteArray,

@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.presentation.util
+package com.sukakotlin.presentation.util
 
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.principal

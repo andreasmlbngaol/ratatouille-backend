@@ -1,6 +1,6 @@
 package com.sukakotlin.features.user.domain.use_case.profile
 
-import com.sukakotlin.features.user.domain.model.profile.ImageData
+import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.user.domain.model.auth.User
 import com.sukakotlin.features.user.domain.repository.UsersRepository
 import com.sukakotlin.features.user.domain.service.ImageCleanupPort
