@@ -10,7 +10,7 @@ class CreateIngredientTagUseCase(
         return try {
             val newTag = IngredientTag(
                 id = 0L,
-                name = name
+                name = name.uppercase().trim()
             )
 
             val savedTag = tagsRepository.save(newTag)

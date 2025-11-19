@@ -19,7 +19,7 @@ class UpdateStepUseCase(
             recipesRepository.findByIdAndAuthorId(recipeId, userId)
                 ?: return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
 
-            val stepsWithImages = recipesRepository.updateStep(stepId, content)
+            val stepsWithImages = recipesRepository.updateStep(recipeId, stepId, content)
             Result.success(stepsWithImages)
         } catch (e: Exception) {
             logger.error("Failed to update step", e)

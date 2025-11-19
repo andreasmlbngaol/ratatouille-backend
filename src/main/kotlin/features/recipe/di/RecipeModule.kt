@@ -9,7 +9,7 @@ import com.sukakotlin.features.recipe.domain.use_case.base.UpdateRecipeUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UploadRecipeImageUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.CreateIngredientTagUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.GetIngredientTagUseCase
-import com.sukakotlin.features.recipe.domain.use_case.ingredients.UpdateIngredientUseCase
+import com.sukakotlin.features.recipe.domain.use_case.ingredients.AddIngredientUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.CreateEmptyStepUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.UpdateStepUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.UploadStepImageUseCase
@@ -24,7 +24,7 @@ val recipeModule = module {
     factory { UploadRecipeImageUseCase(get(), get()) }
     factory { GetIngredientTagUseCase(get()) }
     factory { CreateIngredientTagUseCase(get()) }
-    factory { UpdateIngredientUseCase(get()) }
+    factory { AddIngredientUseCase(get()) }
     factory { CreateEmptyStepUseCase(get()) }
     factory { UploadStepImageUseCase(get(), get()) }
     factory { UpdateStepUseCase(get()) }

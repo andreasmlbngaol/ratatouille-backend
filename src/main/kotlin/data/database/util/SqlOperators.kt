@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.sukakotlin.data.database.util
 
 import org.jetbrains.exposed.v1.core.ComparisonOp
@@ -10,3 +12,15 @@ class ILikeOp(expr1: Expression<*>, expr2: Expression<*>): ComparisonOp(expr1, e
 
 infix fun ExpressionWithColumnType<String>.ilike(pattern: String): Op<Boolean> =
     ILikeOp(this, QueryParameter(pattern, this.columnType))
+
+infix fun ExpressionWithColumnType<String>.ilikeFull(pattern: String): Op<Boolean> =
+    ILikeOp(this, QueryParameter(pattern, this.columnType))
+
+infix fun ExpressionWithColumnType<String>.ilikeContains(pattern: String): Op<Boolean> =
+    ILikeOp(this, QueryParameter("%$pattern%", this.columnType))
+
+infix fun ExpressionWithColumnType<String>.ilikeStartsWith(pattern: String): Op<Boolean> =
+    ILikeOp(this, QueryParameter("$pattern%", this.columnType))
+
+infix fun ExpressionWithColumnType<String>.ilikeEndsWith(pattern: String): Op<Boolean> =
+    ILikeOp(this, QueryParameter("%$pattern", this.columnType))

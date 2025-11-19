@@ -1,9 +1,8 @@
 package com.sukakotlin.features.user.domain.repository
 
-import com.sukakotlin.domain.repository.BaseRepository
 import com.sukakotlin.features.user.domain.model.social.Follow
 
-interface FollowsRepository: BaseRepository<Long, Follow> {
+interface FollowsRepository {
     suspend fun follow(followerId: String, followingId: String): Boolean
     suspend fun unfollow(followerId: String, followingId: String): Boolean
     suspend fun isFollowing(followerId: String, followingId: String): Boolean

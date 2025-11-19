@@ -1,46 +1,46 @@
 package com.sukakotlin.features.user.data.repository
 
-import com.sukakotlin.data.repository.BaseRepositoryImpl
-import com.sukakotlin.features.user.data.entity.FollowsEntity
+import com.sukakotlin.data.database.util.insertWithTimestampsAndGetId
 import com.sukakotlin.features.user.data.table.FollowsTable
-import com.sukakotlin.features.user.data.utils.now
+import com.sukakotlin.shared.util.now
 import com.sukakotlin.features.user.domain.model.social.Follow
 import com.sukakotlin.features.user.domain.repository.FollowsRepository
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.statements.UpsertSqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import kotlin.time.Clock
 
-object FollowsRepositoryImpl:
-        BaseRepositoryImpl<Long, FollowsEntity, Follow>(FollowsEntity.Companion),
-        FollowsRepository {
+object FollowsRepositoryImpl: FollowsRepository {
 
-    private fun FollowsEntity.toFollow() = Follow(
-        id = this.id.value,
-        followerId = this.followerId,
-        followingId = this.followingId,
-        createdAt = this.createdAt
+    private fun ResultRow.toFollow() = Follow(
+        id = this[FollowsTable.id].value,
+        followerId = this[FollowsTable.followerId],
+        followingId = this[FollowsTable.followingId],
+        createdAt = this[FollowsTable.createdAt]
     )
 
-    override fun FollowsEntity.toDomain(): Follow = this.toFollow()
-
+    private fun existsByFollowerIdAndFollowingId(followerId: String, followingId: String): Boolean = transaction {
+        FollowsTable
+            .select(FollowsTable.id)
+            .where {
+                (FollowsTable.followerId eq followerId) and (FollowsTable.followingId eq followingId)
+            }
+            .any()
+    }
 
     override suspend fun follow(followerId: String, followingId: String): Boolean = transaction {
-        val existing = FollowsEntity.find {
-            (FollowsTable.followerId eq followerId) and (FollowsTable.followingId eq followingId)
-        }.firstOrNull()
+        existsByFollowerIdAndFollowingId(followerId, followingId)
 
-        if(existing == null) {
-            saveEntity {
-                this.followerId = followerId
-                this.followingId = followingId
-                this.createdAt = now
-            }
-            true
+        if(!existsByFollowerIdAndFollowingId(followerId, followingId)) {
+            FollowsTable.insertWithTimestampsAndGetId {
+                it[this.followerId] = followerId
+                it[this.followingId] = followingId
+                it[this.createdAt] = now
+            }.value > 0
         } else {
             false
         }
@@ -52,19 +52,22 @@ object FollowsRepositoryImpl:
         } > 0
     }
 
-    override suspend fun isFollowing(followerId: String, followingId: String): Boolean = transaction {
-        !FollowsEntity.find {
-            (FollowsTable.followerId eq followerId) and (FollowsTable.followingId eq followingId)
-        }.empty()
-    }
+    override suspend fun isFollowing(followerId: String, followingId: String): Boolean =
+        existsByFollowerIdAndFollowingId(followerId, followingId)
 
     override suspend fun getFollowerCount(userId: String): Long = transaction {
-        FollowsEntity.find { FollowsTable.followingId eq userId }.count()
+        FollowsTable
+            .select(FollowsTable.id)
+            .where { FollowsTable.followingId eq userId }
+            .count()
     }
 
 
     override suspend fun getFollowingCount(userId: String): Long = transaction {
-        FollowsEntity.find { FollowsTable.followingId eq userId }.count()
+        FollowsTable
+            .select(FollowsTable.id)
+            .where { FollowsTable.followerId eq userId }
+            .count()
     }
 
 
@@ -73,11 +76,13 @@ object FollowsRepositoryImpl:
         limit: Int,
         offset: Int
     ): List<Follow> = transaction {
-        FollowsEntity.find { FollowsTable.followingId eq userId }
+        FollowsTable
+            .selectAll()
+            .where { FollowsTable.followingId eq userId }
             .orderBy(FollowsTable.createdAt to SortOrder.DESC)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toDomain() }
+            .map { it.toFollow() }
     }
 
     override suspend fun getFollowings(
@@ -85,10 +90,12 @@ object FollowsRepositoryImpl:
         limit: Int,
         offset: Int
     ): List<Follow> = transaction {
-        FollowsEntity.find { FollowsTable.followerId eq userId }
+        FollowsTable
+            .selectAll()
+            .where { FollowsTable.followerId eq userId }
             .orderBy(FollowsTable.createdAt to SortOrder.DESC)
             .limit(limit)
             .offset(offset.toLong())
-            .map { it.toDomain() }
+            .map { it.toFollow() }
     }
 }

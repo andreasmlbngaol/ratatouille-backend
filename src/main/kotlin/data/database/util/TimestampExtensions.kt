@@ -12,12 +12,12 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.update
 
-fun <Key: Any, T: BaseTable<Key>> T.insertWithTimestamps(
+fun <Key: Any, T: BaseTable<Key>> T.insertWithTimestampsAndGetId(
     body: T.(InsertStatement<EntityID<Key>>) -> Unit
 ) = insertAndGetId {
-    body(it)
     it[createdAt] = CurrentDateTime
     it[updatedAt] = CurrentDateTime
+    body(it)
 }
 
 fun <Key: Any, T: BaseTable<Key>> T.updateWithTimestamps(

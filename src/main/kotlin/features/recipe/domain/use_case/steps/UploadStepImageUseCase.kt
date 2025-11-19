@@ -3,7 +3,7 @@ package com.sukakotlin.features.recipe.domain.use_case.steps
 import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.recipe.domain.model.Image
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
-import com.sukakotlin.features.user.data.utils.now
+import com.sukakotlin.shared.util.now
 import com.sukakotlin.features.user.domain.service.ImageUploadPort
 import org.slf4j.LoggerFactory
 

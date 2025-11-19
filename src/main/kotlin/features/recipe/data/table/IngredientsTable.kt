@@ -9,4 +9,8 @@ object IngredientsTable: LongBaseTable("ingredients") {
     val alternative = varchar("alternative", 100).nullable()
     val amount = double("amount").nullable()
     val unit = varchar("unit", 100).nullable()
+
+    init {
+        uniqueIndex(recipeId, tagId)
+    }
 }

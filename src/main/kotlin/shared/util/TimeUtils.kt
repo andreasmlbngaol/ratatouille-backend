@@ -1,4 +1,4 @@
-package com.sukakotlin.features.user.data.utils
+package com.sukakotlin.shared.util
 
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

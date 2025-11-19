@@ -47,3 +47,12 @@ data class StepWithImagesResponse(
 )
 
 fun StepWithImages.toResponse() = StepWithImagesResponse(data = this.toDto())
+
+@Serializable
+data class ListStepWithImagesResponse(
+    val success: Boolean = true,
+    val message: String? = null,
+    val data: List<StepWithImagesDto>
+)
+
+fun List<StepWithImages>.toResponse() = ListStepWithImagesResponse(data = this.map { it.toDto() })

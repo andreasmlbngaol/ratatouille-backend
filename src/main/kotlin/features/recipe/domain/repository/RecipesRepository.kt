@@ -1,9 +1,8 @@
 package com.sukakotlin.features.recipe.domain.repository
 
-import com.sukakotlin.domain.repository.BaseRepository
 import com.sukakotlin.features.recipe.domain.model.*
 
-interface RecipesRepository : BaseRepository<Long, Recipe> {
+interface RecipesRepository {
     suspend fun save(recipe: Recipe): Recipe
     suspend fun update(id: Long, recipe: Recipe): Recipe?
 
@@ -11,7 +10,7 @@ interface RecipesRepository : BaseRepository<Long, Recipe> {
     suspend fun findDraftByAuthorId(authorId: String): Recipe?
     suspend fun findByIdAndAuthorId(id: Long, authorId: String): Recipe?
 
-    suspend fun addRecipeImage(userId: String, recipeId: Long, image: Image): List<Image>
+    suspend fun addRecipeImage(recipeId: Long, image: Image): List<Image>
 
     suspend fun addIngredient(
         recipeId: Long,
@@ -28,6 +27,7 @@ interface RecipesRepository : BaseRepository<Long, Recipe> {
         content: String
     ): List<StepWithImages>
     suspend fun updateStep(
+        recipeId: Long,
         id: Long,
         content: String,
     ): List<StepWithImages>

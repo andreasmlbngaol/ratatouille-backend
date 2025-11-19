@@ -40,5 +40,12 @@ data class IngredientWithTagResponse(
     val message: String? = null,
     val data: IngredientWithTagDto
 )
-
 fun IngredientWithTag.toResponse() = IngredientWithTagResponse(data = this.toDto())
+
+@Serializable
+data class ListIngredientWithTagResponse(
+    val success: Boolean = true,
+    val message: String? = null,
+    val data: List<IngredientWithTagDto>
+)
+fun List<IngredientWithTag>.toResponse() = ListIngredientWithTagResponse(data = this.map { it.toDto() })

@@ -3,7 +3,7 @@ package com.sukakotlin.features.recipe.domain.use_case.base
 import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.recipe.domain.model.Image
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
-import com.sukakotlin.features.user.data.utils.now
+import com.sukakotlin.shared.util.now
 import com.sukakotlin.features.user.domain.service.ImageUploadPort
 import org.slf4j.LoggerFactory
 
@@ -33,7 +33,7 @@ class UploadRecipeImageUseCase(
                 createdAt = now
             )
 
-            val images = recipesRepository.addRecipeImage(userId, recipeId, uploadedImage)
+            val images = recipesRepository.addRecipeImage(recipeId, uploadedImage)
             Result.success(images)
 
         } catch (e: Exception) {

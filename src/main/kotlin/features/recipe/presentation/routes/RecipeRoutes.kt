@@ -5,7 +5,7 @@ import com.sukakotlin.features.recipe.domain.use_case.base.UpdateRecipeUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UploadRecipeImageUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.CreateIngredientTagUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.GetIngredientTagUseCase
-import com.sukakotlin.features.recipe.domain.use_case.ingredients.UpdateIngredientUseCase
+import com.sukakotlin.features.recipe.domain.use_case.ingredients.AddIngredientUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.CreateEmptyStepUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.UpdateStepUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.UploadStepImageUseCase
@@ -37,7 +37,7 @@ fun Route.recipeRoutes() {
     val updateRecipeBaseInfo: UpdateRecipeUseCase by inject()
     val getIngredientTag: GetIngredientTagUseCase by inject()
     val createIngredientTag: CreateIngredientTagUseCase by inject()
-    val updateIngredient: UpdateIngredientUseCase by inject()
+    val addIngredient: AddIngredientUseCase by inject()
     val createEmptyStep: CreateEmptyStepUseCase by inject()
     val uploadStepImage: UploadStepImageUseCase by inject()
     val updateStep: UpdateStepUseCase by inject()
@@ -71,7 +71,7 @@ fun Route.recipeRoutes() {
                         isPublic = payload.isPublic,
                         estTimeInMinutes = payload.estTimeInMinutes,
                         portion = payload.portion,
-                        status = null
+                        status = payload.status
                     )
 
                     result.fold(
@@ -105,16 +105,16 @@ fun Route.recipeRoutes() {
                 }
 
                 route("/ingredients") {
-                    patch {
+                    post {
                         val userId = call.userId!!
                         val recipeId = call.recipeId
-                            ?: return@patch call.respond(
+                            ?: return@post call.respond(
                                 HttpStatusCode.BadRequest,
                                 failureResponse("Invalid recipeId")
                             )
                         val payload = call.receive<UpdateIngredientsRequest>()
 
-                        val result = updateIngredient(
+                        val result = addIngredient(
                             userId,
                             recipeId,
                             payload.tagId,
@@ -124,9 +124,7 @@ fun Route.recipeRoutes() {
                         )
 
                         result.fold(
-                            onSuccess = { ingredients ->
-                                call.respond(ingredients.map { it.toResponse() })
-                            },
+                            onSuccess = { call.respond(it.toResponse()) },
                             onFailure = { call.respondFailure(it) }
                         )
                     }
@@ -144,9 +142,7 @@ fun Route.recipeRoutes() {
                         val result = createEmptyStep(userId, recipeId, payload.stepNumber)
 
                         result.fold(
-                            onSuccess = { step ->
-                                call.respond(step.map { it.toResponse() })
-                            },
+                            onSuccess = { call.respond(it.toResponse()) },
                             onFailure = { call.respondFailure(it) }
                         )
                     }
@@ -174,9 +170,7 @@ fun Route.recipeRoutes() {
                             )
 
                             result.fold(
-                                onSuccess = { steps ->
-                                    call.respond(steps.map { it.toResponse() })
-                                },
+                                onSuccess = { call.respond(it.toResponse()) },
                                 onFailure = { call.respondFailure(it) }
                             )
                         }
@@ -219,9 +213,7 @@ fun Route.recipeRoutes() {
                     val result = getIngredientTag(payload.name)
 
                     result.fold(
-                        onSuccess = { tags ->
-                            call.respond(tags.map { it.toResponse() })
-                        },
+                        onSuccess = { call.respond(it.toResponse()) },
                         onFailure = { call.respondFailure(it) }
                     )
                 }

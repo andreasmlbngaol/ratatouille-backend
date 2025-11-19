@@ -4,7 +4,7 @@ import com.sukakotlin.features.recipe.domain.model.IngredientWithTag
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import org.slf4j.LoggerFactory
 
-class UpdateIngredientUseCase(
+class AddIngredientUseCase(
     private val recipesRepository: RecipesRepository
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -25,15 +25,15 @@ class UpdateIngredientUseCase(
                 recipeId = recipeId,
                 tagId = tagId,
                 amount = amount,
-                unit = unit,
-                alternative = alternative
+                unit = unit?.uppercase()?.trim(),
+                alternative = alternative?.trim()?.uppercase()
             )
 
             logger.info("Updated ingredients for recipe $recipeId: $updatedIngredients")
             Result.success(updatedIngredients)
         } catch (e: Exception) {
             logger.error("Failed to update ingredient", e)
-            return Result.failure(e)
+            return Result.failure(IllegalArgumentException("Duplicate ingredient entry"))
         }
     }
 }
