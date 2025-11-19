@@ -16,7 +16,8 @@ fun Application.configureLogging() {
             val path = call.request.uri
             val status = call.response.status()
             val authFull = call.request.headers["Authorization"]
-            val auth = if(status?.value in 200..300) "${authFull?.removePrefix("Bearer ")?.substring(0, 20)}..." else authFull
+//            val auth = if(status?.value in 200..300) "${authFull?.removePrefix("Bearer ")?.substring(0, 20)}..." else authFull
+            val auth = authFull
 
             "[$ip] $method $path -> $status\n\tAuthorization: $auth"
         }
