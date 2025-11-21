@@ -11,14 +11,17 @@ import com.sukakotlin.features.recipe.data.table.StepsImagesTable
 import com.sukakotlin.features.recipe.data.table.StepsTable
 import com.sukakotlin.features.recipe.domain.model.*
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
+import com.sukakotlin.shared.util.uppercaseEachWord
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.slf4j.LoggerFactory
 
 object RecipesRepositoryImpl: RecipesRepository {
+    private val logger = LoggerFactory.getLogger(this::class.java)
     private fun ResultRow.toRecipe() = Recipe(
         id = this[RecipesTable.id].value,
         authorId = this[RecipesTable.authorId],
@@ -89,26 +92,34 @@ object RecipesRepositoryImpl: RecipesRepository {
             ?.toRecipe()
     }
 
-    private fun ResultRow.toImage() = Image(
-        id = this[ImagesTable.id].value,
-        url = this[ImagesTable.url],
-        createdAt = this[ImagesTable.createdAt]
-    )
+    private fun ResultRow.toImage(): Image {
+        logger.info("toImage: $this")
+        return Image(
+            id = this[ImagesTable.id].value,
+            url = this[ImagesTable.url],
+            createdAt = this[ImagesTable.createdAt]
+        )
+    }
 
     override suspend fun addRecipeImage(
         recipeId: Long,
         image: Image
     ): List<Image> = transaction {
+        logger.info("recipeId: $recipeId")
         val imageId = ImagesTable.insertWithTimestampsAndGetId {
             it[ImagesTable.url] = image.url
         }.value
+
+        logger.info("imageId: $imageId")
 
         RecipesImagesTable.insertWithTimestampsAndGetId {
             it[RecipesImagesTable.recipeId] = recipeId
             it[RecipesImagesTable.imageId] = imageId
         }
 
+        logger.info("inserted")
         RecipesImagesTable
+            .innerJoin(ImagesTable, { RecipesImagesTable.imageId }, { ImagesTable.id })
             .selectAll()
             .where { RecipesImagesTable.recipeId eq recipeId }
             .map { it.toImage() }
@@ -120,12 +131,12 @@ object RecipesRepositoryImpl: RecipesRepository {
             recipeId = this[IngredientsTable.recipeId],
             tagId = this[IngredientsTable.tagId],
             amount = this[IngredientsTable.amount],
-            unit = this[IngredientsTable.unit],
+            unit = this[IngredientsTable.unit]?.uppercase(),
             alternative = this[IngredientsTable.alternative]
         ),
         tag = IngredientTag(
             id = this[IngredientTagsTable.id].value,
-            name = this[IngredientTagsTable.name]
+            name = this[IngredientTagsTable.name].uppercaseEachWord()
         )
     )
 
@@ -210,11 +221,51 @@ object RecipesRepositoryImpl: RecipesRepository {
         recipeId: Long,
         stepId: Long,
         image: Image
-    ): List<Image> {
-        TODO("Not yet implemented")
+    ): List<Image> = transaction {
+        val imageId = ImagesTable.insertWithTimestampsAndGetId {
+            it[ImagesTable.url] = image.url
+        }.value
+
+        StepsImagesTable.insertWithTimestampsAndGetId {
+            it[StepsImagesTable.stepId] = stepId
+            it[StepsImagesTable.imageId] = imageId
+        }
+
+        StepsImagesTable
+            .innerJoin(ImagesTable, { StepsImagesTable.imageId }, { ImagesTable.id })
+            .selectAll()
+            .where { StepsImagesTable.stepId eq stepId }
+            .map { it.toImage() }
     }
 
-    override suspend fun findRecipeDetail(id: Long): RecipeDetail? {
-        TODO("Not yet implemented")
+    override suspend fun findRecipeDetail(id: Long): RecipeDetail? = transaction {
+        val recipe = RecipesTable
+                .selectAll()
+                .where { RecipesTable.id eq id }
+                .singleOrNull()
+                ?.toRecipe() ?: return@transaction null
+
+        val images = (RecipesImagesTable innerJoin ImagesTable)
+            .selectAll()
+            .where { RecipesImagesTable.recipeId eq id }
+            .map { it.toImage() }
+
+        val ingredients = (IngredientsTable innerJoin IngredientTagsTable)
+            .selectAll()
+            .where { IngredientsTable.recipeId eq id }
+            .map { it.toIngredientWithTag() }
+
+        val steps = StepsTable
+            .selectAll()
+            .where { StepsTable.recipeId eq id }
+            .orderBy(StepsTable.stepNumber)
+            .map { it.toStepWithImages() }
+
+        RecipeDetail(
+            recipe = recipe,
+            images = images,
+            ingredients = ingredients,
+            steps = steps
+        )
     }
 }

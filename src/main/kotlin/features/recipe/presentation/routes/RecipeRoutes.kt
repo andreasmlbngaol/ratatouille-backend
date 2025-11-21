@@ -1,6 +1,7 @@
 package com.sukakotlin.features.recipe.presentation.routes
 
 import com.sukakotlin.features.recipe.domain.use_case.GetOrCreateDraftRecipeUseCase
+import com.sukakotlin.features.recipe.domain.use_case.GetRecipeDetailUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UpdateRecipeUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UploadRecipeImageUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.CreateIngredientTagUseCase
@@ -41,6 +42,7 @@ fun Route.recipeRoutes() {
     val createEmptyStep: CreateEmptyStepUseCase by inject()
     val uploadStepImage: UploadStepImageUseCase by inject()
     val updateStep: UpdateStepUseCase by inject()
+    val getRecipeDetail: GetRecipeDetailUseCase by inject()
 
     authenticate("firebase-auth") {
         route("/recipes") {
@@ -54,12 +56,27 @@ fun Route.recipeRoutes() {
             }
 
             route("/{recipeId}") {
+                get {
+                    val userId = call.userId!!
+                    val recipeId = call.recipeId
+                        ?: return@get call.respond(
+                            HttpStatusCode.BadRequest,
+                            failureResponse("Invalid Recipe ID")
+                        )
+
+                    val result = getRecipeDetail(userId, recipeId)
+
+                    result.fold(
+                        onSuccess = { call.respond(it.toResponse("Recipe detail")) },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
                 patch {
                     val userId = call.userId!!
                     val recipeId = call.recipeId
                         ?: return@patch call.respond(
                             HttpStatusCode.BadRequest,
-                            failureResponse("Invalid recipeId")
+                            failureResponse("Invalid Recipe ID")
                         )
                     val payload = call.receive<UpdateRecipeRequest>()
 
@@ -79,13 +96,13 @@ fun Route.recipeRoutes() {
                         onFailure = { call.respondFailure(it) }
                     )
                 }
-                post("/picture") {
+                post("/pictures") {
                     val userId = call.userId!!
                     val recipeId = call.parameters["recipeId"]
                         ?.toLongOrNull()
                         ?: return@post call.respond(
                             HttpStatusCode.BadRequest,
-                            failureResponse("Invalid recipeId")
+                            failureResponse("Invalid Recipe ID")
                         )
 
                     val imageData = extractImageFromMultipart(call)
@@ -110,7 +127,7 @@ fun Route.recipeRoutes() {
                         val recipeId = call.recipeId
                             ?: return@post call.respond(
                                 HttpStatusCode.BadRequest,
-                                failureResponse("Invalid recipeId")
+                                failureResponse("Invalid Recipe ID")
                             )
                         val payload = call.receive<UpdateIngredientsRequest>()
 
@@ -136,7 +153,7 @@ fun Route.recipeRoutes() {
                         val recipeId = call.recipeId
                             ?: return@post call.respond(
                                 HttpStatusCode.BadRequest,
-                                failureResponse("Invalid recipeId")
+                                failureResponse("Invalid Recipe ID")
                             )
                         val payload = call.receive<CreateStepRequest>()
                         val result = createEmptyStep(userId, recipeId, payload.stepNumber)
@@ -153,7 +170,7 @@ fun Route.recipeRoutes() {
                             val recipeId = call.recipeId
                                 ?: return@patch call.respond(
                                     HttpStatusCode.BadRequest,
-                                    failureResponse("Invalid recipeId")
+                                    failureResponse("Invalid Recipe ID")
                                 )
                             val stepId = call.parameters["stepId"]
                                 ?.toLongOrNull()
@@ -174,12 +191,12 @@ fun Route.recipeRoutes() {
                                 onFailure = { call.respondFailure(it) }
                             )
                         }
-                        post("/picture") {
+                        post("/pictures") {
                             val userId = call.userId!!
                             val recipeId = call.recipeId
                                 ?: return@post call.respond(
                                     HttpStatusCode.BadRequest,
-                                    failureResponse("Invalid recipeId")
+                                    failureResponse("Invalid Recipe ID")
                                 )
                             val stepId = call.parameters["stepId"]
                                 ?.toLongOrNull()

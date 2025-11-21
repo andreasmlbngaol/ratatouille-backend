@@ -33,6 +33,7 @@ class UploadRecipeImageUseCase(
                 createdAt = now
             )
 
+            logger.info("Uploaded recipe image: $pictureUrl")
             val images = recipesRepository.addRecipeImage(recipeId, uploadedImage)
             Result.success(images)
 

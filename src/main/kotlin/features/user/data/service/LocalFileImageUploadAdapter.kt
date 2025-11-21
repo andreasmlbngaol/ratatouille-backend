@@ -48,12 +48,13 @@ class LocalFileImageUploadAdapter(
     ): String = withContext(Dispatchers.IO) {
         try {
             val fileName = "recipe-${System.currentTimeMillis()}.webp"
-            val userDir = File(uploadDir, "$userId/$recipeId")
+            val childDir = "$userId/recipe-$recipeId"
+            val userDir = File(uploadDir, childDir)
             createDir(userDir)
             val file = File(userDir, fileName)
             convertToWebP(imageData.content, file, 0.7f)
 
-            val absolutePath = "/uploads/images/$userId/$recipeId/$fileName"
+            val absolutePath = "/uploads/images/$childDir/$fileName"
             logger.debug("Image uploaded: $absolutePath")
             return@withContext absolutePath
         } catch (e: Exception) {
@@ -70,12 +71,13 @@ class LocalFileImageUploadAdapter(
     ): String = withContext(Dispatchers.IO) {
         try {
             val fileName = "step-${System.currentTimeMillis()}.webp"
-            val userDir = File(uploadDir, "$userId/$recipeId/$stepId")
+            val childDir = "$userId/recipe-$recipeId/step-$stepId"
+            val userDir = File(uploadDir, childDir)
             createDir(userDir)
             val file = File(userDir, fileName)
             convertToWebP(imageData.content, file, 0.5f)
 
-            val absolutePath = "/uploads/images/$userId/$recipeId/$stepId/$fileName"
+            val absolutePath = "/uploads/images/$childDir/$fileName"
             logger.debug("Image uploaded: $absolutePath")
             return@withContext  absolutePath
         } catch (e: Exception) {

@@ -5,6 +5,7 @@ import com.sukakotlin.features.recipe.data.repository.RecipesRepositoryImpl
 import com.sukakotlin.features.recipe.domain.repository.IngredientTagsRepository
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import com.sukakotlin.features.recipe.domain.use_case.GetOrCreateDraftRecipeUseCase
+import com.sukakotlin.features.recipe.domain.use_case.GetRecipeDetailUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UpdateRecipeUseCase
 import com.sukakotlin.features.recipe.domain.use_case.base.UploadRecipeImageUseCase
 import com.sukakotlin.features.recipe.domain.use_case.ingredients.CreateIngredientTagUseCase
@@ -28,5 +29,5 @@ val recipeModule = module {
     factory { CreateEmptyStepUseCase(get()) }
     factory { UploadStepImageUseCase(get(), get()) }
     factory { UpdateStepUseCase(get()) }
-//    factory { PublishRecipeUseCase(get()) }
+    factory { GetRecipeDetailUseCase(get()) }
 }
