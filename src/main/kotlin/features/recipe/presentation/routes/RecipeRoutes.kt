@@ -46,7 +46,7 @@ fun Route.recipeRoutes() {
 
     authenticate("firebase-auth") {
         route("/recipes") {
-            get("/draft") {
+            get("/drafts") {
                 val userId = call.userId!!
                 val result = getOrCreateDraftRecipe(userId)
                 result.fold(
