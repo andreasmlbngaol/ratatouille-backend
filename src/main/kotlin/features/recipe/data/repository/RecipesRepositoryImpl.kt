@@ -122,7 +122,6 @@ object RecipesRepositoryImpl: RecipesRepository {
             .selectAll()
             .where {
                 (RecipesTable.authorId eq authorId) and
-                        (RecipesTable.isPublic eq false) and
                         (RecipesTable.status eq RecipeStatus.DRAFT)
             }
             .map { recipeRow ->

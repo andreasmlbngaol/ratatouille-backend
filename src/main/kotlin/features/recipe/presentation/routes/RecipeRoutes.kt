@@ -222,8 +222,12 @@ fun Route.recipeRoutes() {
 
             route("/ingredient-tags") {
                 get {
-                    val payload = call.receive<IngredientTagRequest>()
-                    val result = getIngredientTag(payload.name)
+                    val query = call.request.queryParameters["query"]
+                        ?: return@get call.respond(
+                            HttpStatusCode.BadRequest,
+                            failureResponse("Missing query parameter")
+                        )
+                    val result = getIngredientTag(query)
 
                     result.fold(
                         onSuccess = { call.respond(it.toResponse()) },
