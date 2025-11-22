@@ -12,7 +12,7 @@ import com.sukakotlin.features.recipe.domain.use_case.steps.UpdateStepUseCase
 import com.sukakotlin.features.recipe.domain.use_case.steps.UploadStepImageUseCase
 import com.sukakotlin.features.recipe.presentation.dto.request.CreateStepRequest
 import com.sukakotlin.features.recipe.presentation.dto.request.IngredientTagRequest
-import com.sukakotlin.features.recipe.presentation.dto.request.UpdateIngredientsRequest
+import com.sukakotlin.features.recipe.presentation.dto.request.AddIngredientRequest
 import com.sukakotlin.features.recipe.presentation.dto.request.UpdateRecipeRequest
 import com.sukakotlin.features.recipe.presentation.dto.request.UpdateStepRequest
 import com.sukakotlin.features.recipe.presentation.dto.response.toResponse
@@ -114,9 +114,7 @@ fun Route.recipeRoutes() {
                     val result = uploadRecipeImage(userId, recipeId, imageData)
 
                     result.fold(
-                        onSuccess = { images ->
-                            call.respond(images.map { it.toResponse() })
-                        },
+                        onSuccess = { call.respond(it.toResponse()) },
                         onFailure = { call.respondFailure(it) }
                     )
                 }
@@ -129,7 +127,7 @@ fun Route.recipeRoutes() {
                                 HttpStatusCode.BadRequest,
                                 failureResponse("Invalid Recipe ID")
                             )
-                        val payload = call.receive<UpdateIngredientsRequest>()
+                        val payload = call.receive<AddIngredientRequest>()
 
                         val result = addIngredient(
                             userId,
@@ -214,9 +212,7 @@ fun Route.recipeRoutes() {
                             val result = uploadStepImage(userId, recipeId, stepId, imageData)
 
                             result.fold(
-                                onSuccess = { images ->
-                                    call.respond(images.map { it.toResponse() })
-                                },
+                                onSuccess = { call.respond(it.toResponse()) },
                                 onFailure = { call.respondFailure(it) }
                             )
                         }

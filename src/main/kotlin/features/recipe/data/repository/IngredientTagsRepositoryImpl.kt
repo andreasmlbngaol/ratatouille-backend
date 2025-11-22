@@ -3,7 +3,7 @@ package com.sukakotlin.features.recipe.data.repository
 import com.sukakotlin.data.database.util.ilikeContains
 import com.sukakotlin.data.database.util.insertWithTimestampsAndGetId
 import com.sukakotlin.features.recipe.data.table.IngredientTagsTable
-import com.sukakotlin.features.recipe.domain.model.IngredientTag
+import com.sukakotlin.features.recipe.domain.model.ingredient.IngredientTag
 import com.sukakotlin.features.recipe.domain.repository.IngredientTagsRepository
 import com.sukakotlin.shared.util.uppercaseEachWord
 import org.jetbrains.exposed.v1.core.ResultRow

@@ -1,8 +1,8 @@
 package com.sukakotlin.features.recipe.presentation.dto.response
 
-import com.sukakotlin.features.recipe.domain.model.Recipe
-import com.sukakotlin.features.recipe.domain.model.RecipeDetail
-import com.sukakotlin.features.recipe.domain.model.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.Recipe
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeWithImages
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
@@ -43,27 +43,39 @@ fun Recipe.toDto() = RecipeDto(
 fun Recipe.toResponse() = RecipeResponse(data = this.toDto())
 
 @Serializable
-data class RecipeDetailDto(
-    val recipe: RecipeDto,
-    val images: List<ImageDto>,
-    val ingredients: List<IngredientWithTagDto>,
-    val steps: List<StepWithImagesDto>
+data class RecipeWithImagesDto(
+    val id: Long,
+    val authorId: String,
+    val name: String,
+    val description: String?,
+    val isPublic: Boolean,
+    val estTimeInMinutes: Int,
+    val portion: Int,
+    val status: RecipeStatus,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime,
+    val images: List<ImageDto>
 )
 
-fun RecipeDetail.toDto() = RecipeDetailDto(
-    recipe = this.recipe.toDto(),
+fun RecipeWithImages.toDto() = RecipeWithImagesDto(
+    id = this.id,
+    authorId = this.authorId,
+    name = this.name,
+    description = this.description,
+    isPublic = this.isPublic,
+    estTimeInMinutes = this.estTimeInMinutes,
+    portion = this.portion,
+    status = this.status,
+    createdAt = this.createdAt,
+    updatedAt = this.updatedAt,
     images = this.images.map { it.toDto() },
-    ingredients = this.ingredients.map { it.toDto() },
-    steps = this.steps.map { it.toDto() }
 )
 
 @Serializable
-data class RecipeDetailResponse(
+data class RecipeWithImagesResponse(
     val success: Boolean = true,
     val message: String? = null,
-    val data: RecipeDetailDto
+    val data: RecipeWithImagesDto
 )
 
-fun RecipeDetail.toResponse(
-    message: String? = null
-) = RecipeDetailResponse(message = message, data = this.toDto())
+fun RecipeWithImages.toResponse() = RecipeWithImagesResponse(data = this.toDto())

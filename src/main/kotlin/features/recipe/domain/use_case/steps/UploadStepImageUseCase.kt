@@ -2,6 +2,7 @@ package com.sukakotlin.features.recipe.domain.use_case.steps
 
 import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.recipe.domain.model.Image
+import com.sukakotlin.features.recipe.domain.model.step.StepWithImages
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import com.sukakotlin.shared.util.now
 import com.sukakotlin.features.user.domain.service.ImageUploadPort
@@ -18,12 +19,13 @@ class UploadStepImageUseCase(
         recipeId: Long,
         stepId: Long,
         imageData: ImageData
-    ): Result<List<Image>> {
+    ): Result<List<StepWithImages>> {
         return try {
             validateImageSize(imageData)
 
-            recipesRepository.findByIdAndAuthorId(recipeId, userId)
-                ?: return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            recipesRepository.existByIdAndAuthorId(recipeId, userId).let {
+                if(!it) return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            }
 
             val pictureUrl = imageUploadPort.uploadStepImage(
                 userId = userId,
@@ -38,8 +40,8 @@ class UploadStepImageUseCase(
                 createdAt = now
             )
 
-            val images = recipesRepository.addStepImage(userId, recipeId, stepId, uploadedImage)
-            Result.success(images)
+            val stepWithImages = recipesRepository.addStepImage(userId, recipeId, stepId, uploadedImage)
+            Result.success(stepWithImages)
         } catch (e: Exception) {
             logger.error("Failed to upload image", e)
             return Result.failure(e)

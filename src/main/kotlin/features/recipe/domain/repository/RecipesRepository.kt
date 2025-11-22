@@ -1,16 +1,22 @@
 package com.sukakotlin.features.recipe.domain.repository
 
 import com.sukakotlin.features.recipe.domain.model.*
+import com.sukakotlin.features.recipe.domain.model.ingredient.IngredientWithTag
+import com.sukakotlin.features.recipe.domain.model.recipe.Recipe
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeDetail
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeWithImages
+import com.sukakotlin.features.recipe.domain.model.step.StepWithImages
 
 interface RecipesRepository {
-    suspend fun save(recipe: Recipe): Recipe
-    suspend fun update(id: Long, recipe: Recipe): Recipe?
+    suspend fun save(recipe: Recipe): RecipeWithImages
+    suspend fun update(id: Long, recipe: Recipe): RecipeWithImages?
 
     // Draft operations
-    suspend fun findDraftByAuthorId(authorId: String): Recipe?
+    suspend fun findDraftByAuthorId(authorId: String): RecipeWithImages?
     suspend fun findByIdAndAuthorId(id: Long, authorId: String): Recipe?
 
-    suspend fun addRecipeImage(recipeId: Long, image: Image): List<Image>
+    suspend fun existByIdAndAuthorId(id: Long, authorId: String): Boolean
+    suspend fun addRecipeImage(recipeId: Long, image: Image): RecipeWithImages
 
     suspend fun addIngredient(
         recipeId: Long,
@@ -33,7 +39,7 @@ interface RecipesRepository {
     ): List<StepWithImages>
 
     // Step images
-    suspend fun addStepImage(userId: String, recipeId: Long, stepId: Long, image: Image): List<Image>
+    suspend fun addStepImage(userId: String, recipeId: Long, stepId: Long, image: Image): List<StepWithImages>
 
     // Ratings
 //    suspend fun saveRating(rating: Rating): Rating

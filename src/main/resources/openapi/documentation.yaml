@@ -30,6 +30,45 @@ paths:
               schema:
                 $ref: "#/components/schemas/EmptySuccessResponse"
   /api/recipes/{recipeId}:
+    get:
+      description: ""
+      parameters:
+        - name: "recipeId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FailureResponse"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecipeDetailResponse"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FailureResponse"
+        "409":
+          description: "Conflict"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FailureResponse"
+        "500":
+          description: "Internal Server Error <br> ✅ Print full stack trace"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FailureResponse"
     patch:
       description: ""
       parameters:
@@ -76,7 +115,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FailureResponse"
   /api/recipes/{recipeId}/ingredients:
-    patch:
+    post:
       description: ""
       parameters:
         - name: "recipeId"
@@ -102,9 +141,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/IngredientWithTagResponse"
+                $ref: "#/components/schemas/ListIngredientWithTagResponse"
         "404":
           description: "Not Found"
           content:
@@ -123,7 +160,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/FailureResponse"
-  /api/recipes/{recipeId}/picture:
+  /api/recipes/{recipeId}/pictures:
     post:
       description: ""
       parameters:
@@ -192,9 +229,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/StepWithImagesResponse"
+                $ref: "#/components/schemas/ListStepWithImagesResponse"
         "404":
           description: "Not Found"
           content:
@@ -245,9 +280,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/StepWithImagesResponse"
+                $ref: "#/components/schemas/ListStepWithImagesResponse"
         "404":
           description: "Not Found"
           content:
@@ -266,7 +299,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/FailureResponse"
-  /api/recipes/{recipeId}/steps/{stepId}/picture:
+  /api/recipes/{recipeId}/steps/{stepId}/pictures:
     post:
       description: ""
       parameters:
@@ -362,9 +395,7 @@ paths:
           content:
             '*/*':
               schema:
-                type: "array"
-                items:
-                  $ref: "#/components/schemas/IngredientTagResponse"
+                $ref: "#/components/schemas/ListIngredientTagResponse"
         "400":
           description: "Bad Request"
           content:
@@ -718,33 +749,6 @@ components:
           $ref: "#/components/schemas/Void"
       required:
         - "success"
-    UpdateRecipeRequest:
-      type: "object"
-      properties:
-        name:
-          type: "string"
-          nullable: true
-        description:
-          type: "string"
-          nullable: true
-        isPublic:
-          type: "boolean"
-          nullable: true
-        estTimeInMinutes:
-          type: "integer"
-          format: "int32"
-          nullable: true
-        portion:
-          type: "integer"
-          format: "int32"
-          nullable: true
-        status:
-          type: "string"
-          nullable: true
-          enum:
-            - "DRAFT"
-            - "PUBLISHED"
-            - "ARCHIVED"
     RecipeDto:
       type: "object"
       properties:
@@ -788,37 +792,21 @@ components:
         - "status"
         - "createdAt"
         - "updatedAt"
-    RecipeResponse:
+    ImageDto:
       type: "object"
       properties:
-        success:
-          type: "boolean"
-        message:
-          type: "string"
-          nullable: true
-        data:
-          $ref: "#/components/schemas/RecipeDto"
-      required:
-        - "success"
-        - "data"
-    UpdateIngredientsRequest:
-      type: "object"
-      properties:
-        tagId:
+        id:
           type: "integer"
           format: "int64"
-        amount:
-          type: "number"
-          format: "double"
-          nullable: true
-        unit:
+        url:
           type: "string"
-          nullable: true
-        alternative:
+        createdAt:
           type: "string"
-          nullable: true
+          format: "date-time"
       required:
-        - "tagId"
+        - "id"
+        - "url"
+        - "createdAt"
     IngredientDto:
       type: "object"
       properties:
@@ -866,55 +854,6 @@ components:
       required:
         - "ingredient"
         - "tag"
-    IngredientWithTagResponse:
-      type: "object"
-      properties:
-        success:
-          type: "boolean"
-        message:
-          type: "string"
-          nullable: true
-        data:
-          $ref: "#/components/schemas/IngredientWithTagDto"
-      required:
-        - "success"
-        - "data"
-    ImageDto:
-      type: "object"
-      properties:
-        id:
-          type: "integer"
-          format: "int64"
-        url:
-          type: "string"
-        createdAt:
-          type: "string"
-          format: "date-time"
-      required:
-        - "id"
-        - "url"
-        - "createdAt"
-    ImageResponse:
-      type: "object"
-      properties:
-        success:
-          type: "boolean"
-        message:
-          type: "string"
-          nullable: true
-        data:
-          $ref: "#/components/schemas/ImageDto"
-      required:
-        - "success"
-        - "data"
-    CreateStepRequest:
-      type: "object"
-      properties:
-        stepNumber:
-          type: "integer"
-          format: "int32"
-      required:
-        - "stepNumber"
     StepDto:
       type: "object"
       properties:
@@ -946,7 +885,29 @@ components:
       required:
         - "step"
         - "images"
-    StepWithImagesResponse:
+    RecipeDetailDto:
+      type: "object"
+      properties:
+        recipe:
+          $ref: "#/components/schemas/RecipeDto"
+        images:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ImageDto"
+        ingredients:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/IngredientWithTagDto"
+        steps:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/StepWithImagesDto"
+      required:
+        - "recipe"
+        - "images"
+        - "ingredients"
+        - "steps"
+    RecipeDetailResponse:
       type: "object"
       properties:
         success:
@@ -955,7 +916,116 @@ components:
           type: "string"
           nullable: true
         data:
-          $ref: "#/components/schemas/StepWithImagesDto"
+          $ref: "#/components/schemas/RecipeDetailDto"
+      required:
+        - "success"
+        - "data"
+    UpdateRecipeRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          nullable: true
+        description:
+          type: "string"
+          nullable: true
+        isPublic:
+          type: "boolean"
+          nullable: true
+        estTimeInMinutes:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        portion:
+          type: "integer"
+          format: "int32"
+          nullable: true
+        status:
+          type: "string"
+          nullable: true
+          enum:
+            - "DRAFT"
+            - "PUBLISHED"
+            - "ARCHIVED"
+    RecipeResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          $ref: "#/components/schemas/RecipeDto"
+      required:
+        - "success"
+        - "data"
+    UpdateIngredientsRequest:
+      type: "object"
+      properties:
+        tagId:
+          type: "integer"
+          format: "int64"
+        amount:
+          type: "number"
+          format: "double"
+          nullable: true
+        unit:
+          type: "string"
+          nullable: true
+        alternative:
+          type: "string"
+          nullable: true
+      required:
+        - "tagId"
+    ListIngredientWithTagResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/IngredientWithTagDto"
+      required:
+        - "success"
+        - "data"
+    ImageResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          $ref: "#/components/schemas/ImageDto"
+      required:
+        - "success"
+        - "data"
+    CreateStepRequest:
+      type: "object"
+      properties:
+        stepNumber:
+          type: "integer"
+          format: "int32"
+      required:
+        - "stepNumber"
+    ListStepWithImagesResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/StepWithImagesDto"
       required:
         - "success"
         - "data"
@@ -973,6 +1043,21 @@ components:
           type: "string"
       required:
         - "name"
+    ListIngredientTagResponse:
+      type: "object"
+      properties:
+        success:
+          type: "boolean"
+        message:
+          type: "string"
+          nullable: true
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/IngredientTagDto"
+      required:
+        - "success"
+        - "data"
     IngredientTagResponse:
       type: "object"
       properties:

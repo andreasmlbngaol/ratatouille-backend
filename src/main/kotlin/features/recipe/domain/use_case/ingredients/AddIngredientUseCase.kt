@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.domain.use_case.ingredients
 
-import com.sukakotlin.features.recipe.domain.model.IngredientWithTag
+import com.sukakotlin.features.recipe.domain.model.ingredient.IngredientWithTag
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import org.slf4j.LoggerFactory
 
@@ -18,8 +18,9 @@ class AddIngredientUseCase(
         alternative: String?
     ): Result<List<IngredientWithTag>> {
         return try {
-            recipesRepository.findByIdAndAuthorId(recipeId, userId)
-                ?: return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            recipesRepository.existByIdAndAuthorId(recipeId, userId).let {
+                if(!it) return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            }
 
             val updatedIngredients = recipesRepository.addIngredient(
                 recipeId = recipeId,

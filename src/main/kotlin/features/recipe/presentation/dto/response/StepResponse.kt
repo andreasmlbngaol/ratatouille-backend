@@ -1,7 +1,6 @@
 package com.sukakotlin.features.recipe.presentation.dto.response
 
-import com.sukakotlin.features.recipe.domain.model.Step
-import com.sukakotlin.features.recipe.domain.model.StepWithImages
+import com.sukakotlin.features.recipe.domain.model.step.Step
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,31 +27,3 @@ fun Step.toDto() = StepDto(
 
 fun Step.toResponse() = StepResponse(data = this.toDto())
 
-@Serializable
-data class StepWithImagesDto(
-    val step: StepDto,
-    val images: List<ImageDto>
-)
-
-fun StepWithImages.toDto() = StepWithImagesDto(
-    step = this.step.toDto(),
-    images = this.images.map { it.toDto() }
-)
-
-@Serializable
-data class StepWithImagesResponse(
-    val success: Boolean = true,
-    val message: String? = null,
-    val data: StepWithImagesDto
-)
-
-fun StepWithImages.toResponse() = StepWithImagesResponse(data = this.toDto())
-
-@Serializable
-data class ListStepWithImagesResponse(
-    val success: Boolean = true,
-    val message: String? = null,
-    val data: List<StepWithImagesDto>
-)
-
-fun List<StepWithImages>.toResponse() = ListStepWithImagesResponse(data = this.map { it.toDto() })

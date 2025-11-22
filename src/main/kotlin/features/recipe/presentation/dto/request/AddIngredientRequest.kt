@@ -3,7 +3,7 @@ package com.sukakotlin.features.recipe.presentation.dto.request
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UpdateIngredientsRequest(
+data class AddIngredientRequest(
     val tagId: Long,
     val amount: Double? = null,
     val unit: String? = null,

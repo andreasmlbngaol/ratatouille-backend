@@ -1,7 +1,8 @@
 package com.sukakotlin.features.recipe.domain.use_case
 
-import com.sukakotlin.features.recipe.domain.model.Recipe
-import com.sukakotlin.features.recipe.domain.model.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.Recipe
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeWithImages
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import com.sukakotlin.shared.util.now
 import org.slf4j.LoggerFactory
@@ -11,7 +12,7 @@ class GetOrCreateDraftRecipeUseCase(
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
-    suspend operator fun invoke(userId: String): Result<Recipe> {
+    suspend operator fun invoke(userId: String): Result<RecipeWithImages> {
         return try {
             val existingDraft = recipesRepository.findDraftByAuthorId(userId)
             logger.info("Found existing draft recipe $existingDraft")

@@ -25,3 +25,12 @@ fun Image.toDto() = ImageDto(
 )
 
 fun Image.toResponse() = ImageResponse(data = this.toDto())
+
+@Serializable
+data class ListImageResponse(
+    val success: Boolean = true,
+    val message: String? = null,
+    val data: List<ImageDto>
+)
+
+fun List<Image>.toResponse() = ListImageResponse(data = this.map { it.toDto() })

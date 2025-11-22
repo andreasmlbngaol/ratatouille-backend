@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.domain.use_case
 
-import com.sukakotlin.features.recipe.domain.model.RecipeDetail
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeDetail
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import org.slf4j.LoggerFactory
 

@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.presentation.dto.request
 
-import com.sukakotlin.features.recipe.domain.model.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeStatus
 import kotlinx.serialization.Serializable
 
 @Serializable

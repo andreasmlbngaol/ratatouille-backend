@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.domain.use_case.ingredients
 
-import com.sukakotlin.features.recipe.domain.model.IngredientTag
+import com.sukakotlin.features.recipe.domain.model.ingredient.IngredientTag
 import com.sukakotlin.features.recipe.domain.repository.IngredientTagsRepository
 
 class CreateIngredientTagUseCase(

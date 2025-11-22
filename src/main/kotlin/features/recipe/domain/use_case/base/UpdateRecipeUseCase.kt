@@ -1,7 +1,7 @@
 package com.sukakotlin.features.recipe.domain.use_case.base
 
-import com.sukakotlin.features.recipe.domain.model.Recipe
-import com.sukakotlin.features.recipe.domain.model.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeStatus
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeWithImages
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import org.slf4j.LoggerFactory
 
@@ -19,7 +19,7 @@ class UpdateRecipeUseCase(
         estTimeInMinutes: Int?,
         portion: Int?,
         status: RecipeStatus?
-    ): Result<Recipe> {
+    ): Result<RecipeWithImages> {
         return try {
             if(name == null && description == null && isPublic == null && estTimeInMinutes == null && portion == null && status == null) {
                 logger.error("No fields to update")

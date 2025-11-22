@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.presentation.dto.response
 
-import com.sukakotlin.features.recipe.domain.model.IngredientTag
+import com.sukakotlin.features.recipe.domain.model.ingredient.IngredientTag
 import kotlinx.serialization.Serializable
 
 @Serializable

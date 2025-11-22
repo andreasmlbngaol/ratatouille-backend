@@ -1,4 +1,4 @@
-package com.sukakotlin.features.recipe.domain.model
+package com.sukakotlin.features.recipe.domain.model.ingredient
 
 data class Ingredient(
     val id: Long,

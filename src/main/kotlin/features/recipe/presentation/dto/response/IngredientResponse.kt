@@ -1,7 +1,6 @@
 package com.sukakotlin.features.recipe.presentation.dto.response
 
-import com.sukakotlin.features.recipe.domain.model.Ingredient
-import com.sukakotlin.features.recipe.domain.model.IngredientWithTag
+import com.sukakotlin.features.recipe.domain.model.ingredient.Ingredient
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,30 +21,3 @@ fun Ingredient.toDto() = IngredientDto(
     unit = this.unit,
     alternative = this.alternative
 )
-
-@Serializable
-data class IngredientWithTagDto(
-    val ingredient: IngredientDto,
-    val tag: IngredientTagDto
-)
-
-fun IngredientWithTag.toDto() = IngredientWithTagDto(
-    ingredient = this.ingredient.toDto(),
-    tag = this.tag.toDto()
-)
-
-@Serializable
-data class IngredientWithTagResponse(
-    val success: Boolean = true,
-    val message: String? = null,
-    val data: IngredientWithTagDto
-)
-fun IngredientWithTag.toResponse() = IngredientWithTagResponse(data = this.toDto())
-
-@Serializable
-data class ListIngredientWithTagResponse(
-    val success: Boolean = true,
-    val message: String? = null,
-    val data: List<IngredientWithTagDto>
-)
-fun List<IngredientWithTag>.toResponse() = ListIngredientWithTagResponse(data = this.map { it.toDto() })

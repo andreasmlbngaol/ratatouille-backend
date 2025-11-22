@@ -1,6 +1,6 @@
 package com.sukakotlin.features.recipe.domain.use_case.steps
 
-import com.sukakotlin.features.recipe.domain.model.StepWithImages
+import com.sukakotlin.features.recipe.domain.model.step.StepWithImages
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import org.slf4j.LoggerFactory
 

@@ -1,4 +1,4 @@
-package com.sukakotlin.features.recipe.domain.model
+package com.sukakotlin.features.recipe.domain.model.step
 
 data class Step(
     val id: Long,

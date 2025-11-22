@@ -2,6 +2,7 @@ package com.sukakotlin.features.recipe.domain.use_case.base
 
 import com.sukakotlin.domain.model.ImageData
 import com.sukakotlin.features.recipe.domain.model.Image
+import com.sukakotlin.features.recipe.domain.model.recipe.RecipeWithImages
 import com.sukakotlin.features.recipe.domain.repository.RecipesRepository
 import com.sukakotlin.shared.util.now
 import com.sukakotlin.features.user.domain.service.ImageUploadPort
@@ -17,12 +18,13 @@ class UploadRecipeImageUseCase(
         userId: String,
         recipeId: Long,
         imageData: ImageData
-    ): Result<List<Image>> {
+    ): Result<RecipeWithImages> {
         return try {
             validateImageSize(imageData)
 
-            recipesRepository.findByIdAndAuthorId(recipeId, userId)
-                ?: return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            recipesRepository.existByIdAndAuthorId(recipeId, userId).let {
+                if(!it) return Result.failure(IllegalArgumentException("Recipe with id $recipeId and author $userId not found"))
+            }
 
             val pictureUrl = imageUploadPort.uploadRecipeImage(userId, recipeId, imageData)
                 ?: return Result.failure(IllegalStateException("Failed to upload image"))
