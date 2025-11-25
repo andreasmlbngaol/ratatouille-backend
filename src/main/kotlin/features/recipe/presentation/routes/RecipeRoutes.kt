@@ -174,6 +174,19 @@ fun Route.recipeRoutes() {
                             onFailure = { call.respondFailure(it) }
                         )
                     }
+                    get {
+                        val userId = call.userId!!
+                        val recipeId = call.recipeId
+                            ?: return@get call.respond(
+                                HttpStatusCode.BadRequest,
+                                failureResponse("Invalid Recipe ID")
+                            )
+                        val result = getRecipeDetail(userId, recipeId)
+                        result.fold(
+                            onSuccess = { call.respond(it.steps.toResponse()) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
 
                     route("/{stepId}") {
                         patch {
