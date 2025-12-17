@@ -416,4 +416,29 @@ class RecipeService(
         logger.error("Error retrieving recipes", e)
         Result.failure(e)
     }
+
+    fun fridgeFilterRecipes(
+        userId: String,
+        includedIngredientTags: List<Long>,
+        excludedIngredientTags: List<Long>,
+        minRating: Double? = null,
+        minEstTime: Int? = null,
+        maxEstTime: Int? = null
+    ): Result<List<RecipeDetail>> {
+        return try {
+            val recipes = recipesRepository.fridgeFilter(
+                userId = userId,
+                includedIngredientTags = includedIngredientTags,
+                excludedIngredientTags = excludedIngredientTags,
+                minRating = minRating,
+                minEstTime = minEstTime,
+                maxEstTime = maxEstTime
+            )
+
+            Result.success(recipes)
+        } catch (e: Exception) {
+            logger.error("Error fridge filtering recipes for user: $userId", e)
+            Result.failure(e)
+        }
+    }
 }

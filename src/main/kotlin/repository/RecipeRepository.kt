@@ -26,7 +26,11 @@ import com.sukakotlin.utils.uppercaseEachWord
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.v1.core.alias
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.avg
+import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -143,7 +147,7 @@ class RecipeRepository {
 
     fun update(id: Long, recipe: Recipe): RecipeWithImages? = transaction {
         val updatedRows = RecipesTable
-            .update ({ RecipesTable.id eq id }) {
+            .update({ RecipesTable.id eq id }) {
                 it[name] = recipe.name
                 it[description] = recipe.description
                 it[isPublic] = recipe.isPublic
@@ -218,7 +222,8 @@ class RecipeRepository {
         val steps = getRecipeSteps(id)
         val comments = getCommentWithImage(id)
         val rating = getRecipeRating(id)
-        val isFavorited = if(userId == recipe.authorId) null else isFavorited(id, userId)
+
+        val isFavorited = if (userId == recipe.authorId) null else isFavorited(id, userId)
         val favoriteCount = getFavorite(id)
 
         RecipeDetail(
@@ -259,13 +264,16 @@ class RecipeRepository {
         minEstTime: Int? = null,
         maxEstTime: Int? = null
     ): List<RecipeDetail> = transaction {
+        // Base query dengan filter text dan status
         var baseQuery = RecipesTable
             .selectAll()
             .where {
                 (RecipesTable.name ilikeContains query) and
-                        (RecipesTable.status eq RecipeStatus.PUBLISHED)
+                        (RecipesTable.status eq RecipeStatus.PUBLISHED) and
+                        (RecipesTable.isPublic eq true)
             }
 
+        // Filter berdasarkan estimated time
         if (minEstTime != null) {
             baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes greaterEq minEstTime }
         }
@@ -274,22 +282,44 @@ class RecipeRepository {
             baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes lessEq maxEstTime }
         }
 
+        // Jika ada minRating filter, ambil recipe IDs yang match
+        var recipeIds: List<Long>? = null
+        if (minRating != null) {
+            // Query ratings dan grouping di memory
+            recipeIds = RatingsTable
+                .selectAll()
+                .map { it[RatingsTable.recipeId] }
+                .groupingBy { it }
+                .eachCount()
+                .mapNotNull { (recipeId, _) ->
+                    val ratings = RatingsTable
+                        .selectAll()
+                        .where { RatingsTable.recipeId eq recipeId }
+                        .map { it[RatingsTable.value] }
+
+                    val average = if (ratings.isNotEmpty()) ratings.average() else 0.0
+                    if (average >= minRating) recipeId else null
+                }
+
+            // Filter base query dengan recipe IDs
+            if (recipeIds.isNotEmpty()) {
+                baseQuery = baseQuery.andWhere { RecipesTable.id inList recipeIds }
+            } else {
+                return@transaction emptyList()
+            }
+        }
+
         baseQuery
             .orderBy(RecipesTable.createdAt to SortOrder.DESC)
             .mapNotNull { recipeRow ->
                 val recipe = recipeRow.toRecipe()
-
-                // Filter: public atau milik user
-                if (!recipe.isPublic && recipe.authorId != userId) {
-                    return@mapNotNull null
-                }
 
                 val images = getRecipeImages(recipe.id)
                 val ingredients = getRecipeIngredients(recipe.id)
                 val steps = getRecipeSteps(recipe.id)
                 val comments = getCommentWithImage(recipe.id)
                 val rating = getRecipeRating(recipe.id)
-                val isFavorited = isFavorited(recipe.id, recipe.authorId)
+                val isFavorited = isFavorited(recipe.id, userId)
                 val favoriteCount = getFavorite(recipe.id)
 
                 RecipeDetail(
@@ -312,10 +342,7 @@ class RecipeRepository {
                     rating = rating,
                     isFavorited = isFavorited,
                     favoriteCount = favoriteCount
-                ).takeIf {
-                    if (minRating != null) it.rating.average >= minRating
-                    else true
-                }
+                )
             }
     }
 
@@ -433,11 +460,13 @@ class RecipeRepository {
 
     // Comments
     fun addComment(recipeId: Long, userId: String, content: String, imageUrl: String?): CommentWithImage = transaction {
+        val now = System.currentTimeMillis()
+
         val commentId = CommentsTable.insertAndGetId {
             it[CommentsTable.recipeId] = recipeId
             it[CommentsTable.userId] = userId
             it[CommentsTable.content] = content
-            it[CommentsTable.createdAt] = System.currentTimeMillis()
+            it[CommentsTable.createdAt] = now
         }.value
 
         var image: Image? = null
@@ -459,7 +488,7 @@ class RecipeRepository {
             recipeId = recipeId,
             authorId = userId,
             content = content,
-            createdAt = System.currentTimeMillis(),
+            createdAt = now,
             image = image
         )
     }
@@ -542,8 +571,120 @@ class RecipeRepository {
             .orderBy(BookmarksTable.id to SortOrder.DESC)
             .map { it[BookmarksTable.recipeId] }
 
-        favIds.mapNotNull { recipeId ->
+        val details = favIds.mapNotNull { recipeId ->
             findRecipeDetail(recipeId, userId)
         }
+
+        val validIds = details.map { it.recipe.id }
+        val invalidIds = favIds - validIds.toSet()
+        if (invalidIds.isNotEmpty()) {
+            BookmarksTable.deleteWhere {
+                (BookmarksTable.userId eq userId) and (BookmarksTable.recipeId inList invalidIds)
+            }
+        }
+
+        details
+    }
+
+    fun fridgeFilter(
+        userId: String,
+        includedIngredientTags: List<Long>,
+        excludedIngredientTags: List<Long>,
+        minRating: Double? = null,
+        minEstTime: Int? = null,
+        maxEstTime: Int? = null
+    ): List<RecipeDetail> = transaction {
+
+        // ===== BASE QUERY =====
+        var baseQuery = RecipesTable
+            .select(RecipesTable.id)
+            .where {
+                (RecipesTable.status eq RecipeStatus.PUBLISHED) and
+                        (RecipesTable.isPublic eq true)
+            }
+
+        // ===== EST TIME FILTER =====
+        if (minEstTime != null) {
+            baseQuery = baseQuery.andWhere {
+                RecipesTable.estTimeInMinutes greaterEq minEstTime
+            }
+        }
+
+        if (maxEstTime != null) {
+            baseQuery = baseQuery.andWhere {
+                RecipesTable.estTimeInMinutes lessEq maxEstTime
+            }
+        }
+
+        // ===== INCLUDED TAGS (HARUS ADA SEMUA) =====
+        if (includedIngredientTags.isNotEmpty()) {
+            val tagCount = IngredientsTable.tagId.countDistinct().alias("tag_count")
+
+            val includedRecipeIds = IngredientsTable
+                .selectAll()
+                .where {
+                    IngredientsTable.tagId inList includedIngredientTags
+                }
+                .groupBy(IngredientsTable.recipeId)
+                .mapNotNull {
+                    val count = it[tagCount]
+                    val recipeId = it[IngredientsTable.recipeId]
+
+                    if (count == includedIngredientTags.size.toLong()) recipeId else null
+                }
+
+            if (includedRecipeIds.isEmpty()) return@transaction emptyList()
+
+            baseQuery = baseQuery.andWhere {
+                RecipesTable.id inList includedRecipeIds
+            }
+        }
+
+        // ===== EXCLUDED TAGS (TIDAK BOLEH ADA) =====
+        if (excludedIngredientTags.isNotEmpty()) {
+            val excludedRecipeIds = IngredientsTable
+                .selectAll()
+                .where {
+                    IngredientsTable.tagId inList excludedIngredientTags
+                }
+                .map { it[IngredientsTable.recipeId] }
+                .distinct()
+
+            if (excludedRecipeIds.isNotEmpty()) {
+                baseQuery = baseQuery.andWhere {
+                    RecipesTable.id notInList excludedRecipeIds
+                }
+            }
+        }
+
+        // ===== MIN RATING =====
+        if (minRating != null) {
+            val avgRating = RatingsTable.value.avg().alias("avg_rating")
+            val minRatingBd = minRating.toBigDecimal()
+
+            val ratedRecipeIds = RatingsTable
+                .selectAll()
+                .groupBy(RatingsTable.recipeId)
+                .mapNotNull { row ->
+                    val avg = row[avgRating]          // BigDecimal?
+                    val recipeId = row[RatingsTable.recipeId]
+
+                    if (avg != null && avg >= minRatingBd) recipeId else null
+                }
+
+            if (ratedRecipeIds.isEmpty()) return@transaction emptyList()
+
+            baseQuery = baseQuery.andWhere {
+                RecipesTable.id inList ratedRecipeIds
+            }
+        }
+
+        // ===== FINAL RESULT =====
+        baseQuery
+            .orderBy(RecipesTable.createdAt to SortOrder.DESC)
+            .map { it[RecipesTable.id].value }
+            .mapNotNull { recipeId ->
+                findRecipeDetail(recipeId, userId)
+            }
     }
 }

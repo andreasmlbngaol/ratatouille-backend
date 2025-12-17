@@ -2,6 +2,7 @@ package com.sukakotlin.routes
 
 import com.sukakotlin.dto.AddIngredientRequest
 import com.sukakotlin.dto.CreateStepRequest
+import com.sukakotlin.dto.FridgeFilterRequest
 import com.sukakotlin.dto.IngredientTagRequest
 import com.sukakotlin.dto.RateRecipeRequest
 import com.sukakotlin.dto.UpdateRecipeRequest
@@ -455,6 +456,23 @@ fun Route.recipeRoutes() {
                         onSuccess = { call.respond(it) },
                         onFailure = { call.respondFailure(it) }
                     )
+            }
+
+            get("/fridge-filter") {
+                val userId = call.userId!!
+                val payload = call.receive<FridgeFilterRequest>()
+
+                recipeService.fridgeFilterRecipes(
+                    userId = userId,
+                    includedIngredientTags = payload.includedIngredients,
+                    excludedIngredientTags = payload.excludedIngredients,
+                    minRating = payload.minRating,
+                    minEstTime = payload.minEstTime,
+                    maxEstTime = payload.maxEstTime
+                ).fold(
+                    onSuccess = { call.respond(it) },
+                    onFailure = { call.respondFailure(it) }
+                )
             }
         }
     }
