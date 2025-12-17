@@ -19,7 +19,8 @@ fun Application.configureLogging() {
 //            val auth = if(status?.value in 200..300) "${authFull?.removePrefix("Bearer ")?.substring(0, 20)}..." else authFull
             val auth = authFull
 
-            "[$ip] $method $path -> $status\n\tAuthorization: $auth"
+//            "[$ip] $method $path -> $status\n\tAuthorization: $auth"
+            auth ?: "No Auth"
         }
     }
 }

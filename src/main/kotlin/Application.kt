@@ -1,9 +1,17 @@
 package com.sukakotlin
 
-import com.sukakotlin.config.*
-import com.sukakotlin.data.database.DatabaseFactory
+import com.sukakotlin.config.configureCORS
+import com.sukakotlin.config.configureEnvironment
+import com.sukakotlin.config.configureExceptionHandling
+import com.sukakotlin.config.configureFirebase
+import com.sukakotlin.config.configureKoin
+import com.sukakotlin.config.configureLogging
+import com.sukakotlin.config.configureRouting
+import com.sukakotlin.config.configureSecurity
+import com.sukakotlin.config.configureSerialization
+import com.sukakotlin.database.DatabaseFactory
 import io.ktor.server.application.*
-import io.ktor.server.netty.*
+import io.ktor.server.netty.EngineMain
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -18,6 +26,6 @@ fun Application.module() {
     configureSecurity()
     configureExceptionHandling()
     configureLogging()
-    configureCors()
+    configureCORS()
     configureRouting()
 }
