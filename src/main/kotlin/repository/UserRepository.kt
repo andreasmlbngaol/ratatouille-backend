@@ -1,11 +1,16 @@
 package com.sukakotlin.repository
 
+import com.sukakotlin.database.tables.users.FollowsTable
 import com.sukakotlin.database.tables.users.UsersTable
 import com.sukakotlin.database.utils.ilikeContains
 import com.sukakotlin.model.User
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -29,6 +34,13 @@ class UserRepository {
             .singleOrNull()
             ?.toUser()
     }
+
+    fun existById(targetId: String): Boolean = transaction {
+        UsersTable.selectAll()
+            .where { UsersTable.id eq targetId }
+            .count() > 0
+    }
+
 
     fun save(user: User) = transaction {
         UsersTable.insertAndGetId {
@@ -77,14 +89,6 @@ class UserRepository {
         }
     }
 
-    fun searchByName(query: String): List<User> = transaction {
-        UsersTable
-            .selectAll()
-            .where { UsersTable.name ilikeContains query }
-            .andWhere { UsersTable.isEmailVerified eq true }
-            .map { it.toUser() }
-    }
-
     fun searchByNameExcluding(query: String, excludeUserId: String): List<User> = transaction {
         UsersTable
             .selectAll()
@@ -92,5 +96,40 @@ class UserRepository {
             .andWhere { UsersTable.id neq excludeUserId }
             .andWhere { UsersTable.isEmailVerified eq true }
             .map { it.toUser() }
+    }
+
+    fun follow(targetId: String, followerId: String) = transaction {
+        FollowsTable
+            .insertAndGetId {
+                it[FollowsTable.followerId] = followerId
+                it[FollowsTable.followingId] = targetId
+            }.value > 0
+    }
+
+    fun unfollow(targetId: String, followerId: String) = transaction {
+        FollowsTable.deleteWhere {
+            (FollowsTable.followerId eq followerId) and (FollowsTable.followingId eq targetId)
+        } > 0
+    }
+
+    fun isFollowing(targetId: String, followerId: String): Boolean = transaction {
+        FollowsTable
+            .select(FollowsTable.id)
+            .where { (FollowsTable.followerId eq followerId) and (FollowsTable.followingId eq targetId) }
+            .count() > 0
+    }
+
+    fun countFollowers(targetId: String) = transaction {
+        FollowsTable
+            .select(FollowsTable.id)
+            .where { FollowsTable.followingId eq targetId }
+            .count()
+    }
+
+    fun countFollowing(targetId: String) = transaction {
+        FollowsTable
+            .select(FollowsTable.id)
+            .where { FollowsTable.followerId eq targetId }
+            .count()
     }
 }

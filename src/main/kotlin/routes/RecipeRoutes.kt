@@ -3,22 +3,30 @@ package com.sukakotlin.routes
 import com.sukakotlin.dto.AddIngredientRequest
 import com.sukakotlin.dto.CreateStepRequest
 import com.sukakotlin.dto.IngredientTagRequest
+import com.sukakotlin.dto.RateRecipeRequest
 import com.sukakotlin.dto.UpdateRecipeRequest
 import com.sukakotlin.dto.UpdateRecipeStatusRequest
 import com.sukakotlin.dto.UpdateStepRequest
+import com.sukakotlin.model.ImageData
 import com.sukakotlin.service.RecipeService
 import com.sukakotlin.utils.extractImageFromMultipart
 import com.sukakotlin.utils.respondFailure
 import com.sukakotlin.utils.userId
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
 import org.koin.ktor.ext.inject
 
 fun Route.recipeRoutes() {
@@ -36,8 +44,16 @@ fun Route.recipeRoutes() {
                         "Query parameter 'query' must be at least 3 characters long."
                     )
 
+                val minRating = call.request.queryParameters["minRating"]?.toDoubleOrNull()
                 val minEstTime = call.request.queryParameters["minEstTime"]?.toIntOrNull()
                 val maxEstTime = call.request.queryParameters["maxEstTime"]?.toIntOrNull()
+
+                if (minRating != null && (minRating !in 0.0..5.0)) {
+                    return@get call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Rating must be between 0 and 5"
+                    )
+                }
 
                 // Validation
                 if (minEstTime != null && minEstTime < 0) {
@@ -61,7 +77,13 @@ fun Route.recipeRoutes() {
                     )
                 }
 
-                recipeService.searchRecipes(query, userId, minEstTime, maxEstTime).fold(
+                recipeService.searchRecipes(
+                    query = query,
+                    userId = userId,
+                    minRating = minRating,
+                    minEstTime = minEstTime,
+                    maxEstTime = maxEstTime
+                ).fold(
                     onSuccess = { call.respond(it) },
                     onFailure = { call.respondFailure(it) }
                 )
@@ -98,10 +120,10 @@ fun Route.recipeRoutes() {
             }
 
             route("/{recipeId}") {
-                post("/status") {
+                patch("/status") {
                     val userId = call.userId!!
                     val recipeId = call.parameters["recipeId"]?.toLongOrNull()
-                        ?: return@post call.respond(
+                        ?: return@patch call.respond(
                             HttpStatusCode.BadRequest,
                             "Invalid Recipe ID"
                         )
@@ -154,7 +176,6 @@ fun Route.recipeRoutes() {
                         isPublic = payload.isPublic,
                         estTimeInMinutes = payload.estTimeInMinutes,
                         portion = payload.portion,
-                        status = payload.status
                     ).fold(
                         onSuccess = { call.respond(it) },
                         onFailure = { call.respondFailure(it) }
@@ -304,6 +325,136 @@ fun Route.recipeRoutes() {
                         }
                     }
                 }
+
+                route("/comments") {
+                    post {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@post call.respond(
+                                HttpStatusCode.BadRequest,
+                                "Invalid Recipe ID"
+                            )
+
+                        val multipartData = call.receiveMultipart()
+                        var content: String? = null
+                        var imageData: ImageData? = null
+
+                        multipartData.forEachPart { part ->
+                            when (part) {
+                                is PartData.FormItem -> {
+                                    if (part.name == "content") content = part.value
+                                }
+                                is PartData.FileItem -> {
+                                    if (part.name == "image") {
+                                        imageData = ImageData(
+                                            content = part.provider().readRemaining().readByteArray(),
+                                            mimeType = part.contentType?.toString() ?: "image/jpeg",
+                                            fileName = part.originalFileName ?: "image.jpeg"
+                                        )
+                                    }
+                                }
+                                else -> {}
+                            }
+                            part.dispose()
+                        }
+
+                        content ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing comment content")
+
+                        recipeService.addComment(userId, recipeId, content, imageData).fold(
+                            onSuccess = { call.respond(it) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+
+                    get {
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid Recipe ID")
+
+                        recipeService.getRecipeComments(recipeId).fold(
+                            onSuccess = { call.respond(it) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+
+                    delete("/{commentId}") {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid Recipe ID")
+                        val commentId = call.parameters["commentId"]?.toLongOrNull()
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid Comment ID")
+
+                        recipeService.deleteComment(commentId, userId, recipeId).fold(
+                            onSuccess = { call.respond(mapOf("success" to it)) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+                }
+
+                route("/ratings") {
+                    post {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@post call.respond(
+                                HttpStatusCode.BadRequest,
+                                "Invalid Recipe ID"
+                            )
+
+                        val payload = call.receive<RateRecipeRequest>()
+
+                        recipeService.rateRecipe(userId, recipeId, payload.value).fold(
+                            onSuccess = { call.respond(HttpStatusCode.OK) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+
+                    delete {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid Recipe ID")
+
+                        recipeService.removeRating(userId, recipeId).fold(
+                            onSuccess = { call.respond(HttpStatusCode.OK) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+                }
+
+                route("/favorites") {
+                    post {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@post call.respond(
+                                HttpStatusCode.BadRequest,
+                                "Invalid Recipe ID"
+                            )
+
+                        recipeService.saveRecipe(userId = userId, recipeId = recipeId).fold(
+                            onSuccess = { call.respond(it) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+
+                    delete {
+                        val userId = call.userId!!
+                        val recipeId = call.parameters["recipeId"]?.toLongOrNull()
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid Recipe ID")
+
+                        recipeService.removeSavedRecipe(userId = userId, recipeId = recipeId).fold(
+                            onSuccess = { call.respond(it) },
+                            onFailure = { call.respondFailure(it) }
+                        )
+                    }
+                }
+            }
+
+            get("/favorites") {
+                val userId = call.userId!!
+
+                recipeService.getSavedRecipes(userId)
+                    .fold(
+                        onSuccess = { call.respond(it) },
+                        onFailure = { call.respondFailure(it) }
+                    )
             }
         }
     }

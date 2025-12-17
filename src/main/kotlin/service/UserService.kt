@@ -2,12 +2,15 @@ package com.sukakotlin.service
 
 import com.sukakotlin.model.ImageData
 import com.sukakotlin.model.User
+import com.sukakotlin.model.UserDetail
+import com.sukakotlin.repository.RecipeRepository
 import com.sukakotlin.repository.UserRepository
 import org.slf4j.LoggerFactory
 
 class UserService(
     private val authService: AuthService,
     private val userRepository: UserRepository,
+    private val recipeRepository: RecipeRepository,
     private val storageService: StorageService
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -120,35 +123,90 @@ class UserService(
         }
     }
 
-    fun getUserDetail(userId: String, currentUserId: String): Result<User> {
+    fun getUserDetail(targetUserId: String, currentUserId: String): Result<UserDetail> {
         return try {
-            val user = userRepository.findById(userId)
+            println("$targetUserId, $currentUserId")
+
+            val user = userRepository.findById(id = targetUserId)
                 ?: return Result.failure(Exception("User not found"))
-            Result.success(user)
+
+            val recipes = recipeRepository.findAllDetailByAuthorId(targetUserId)
+
+            val isMe = targetUserId == currentUserId
+            val isFollower = if(isMe) null
+            else userRepository.isFollowing(currentUserId, targetUserId)
+
+            val isFollowing = if(isMe) null
+            else userRepository.isFollowing(targetUserId, currentUserId)
+
+            val followersCount = userRepository.countFollowers(targetUserId)
+            val followingCount = userRepository.countFollowing(targetUserId)
+
+            val detail = UserDetail(
+                user = user,
+                recipes = recipes,
+                isMe = isMe,
+                isFollower = isFollower,
+                isFollowing = isFollowing,
+                followersCount = followersCount,
+                followingCount = followingCount,
+            )
+
+            Result.success(detail)
         } catch (e: Exception) {
-            logger.error("Error getting user detail for user $userId", e)
+            logger.error("Error getting user detail for user $targetUserId", e)
             Result.failure(e)
         }
     }
 
-    fun followUser(currentUserId: String, targetUserId: String): Result<User> {
+    fun followUser(currentUserId: String, targetUserId: String): Result<Boolean> {
         return try {
-            // TODO: Implement follow logic
-            val user = userRepository.findById(targetUserId)
-                ?: return Result.failure(Exception("User not found"))
-            Result.success(user)
+            if(currentUserId == targetUserId) return Result.failure(Exception("Cannot follow yourself"))
+
+            userRepository.existById(currentUserId).let {
+                if(!it) return Result.failure(Exception("User not found"))
+            }
+            userRepository.existById(targetUserId).let {
+                if(!it) return Result.failure(Exception("User not found"))
+            }
+
+            if(userRepository.isFollowing(targetUserId, currentUserId))
+                return Result.success(true)
+
+            val success = userRepository.follow(
+                targetId = targetUserId,
+                followerId = currentUserId
+            )
+
+            Result.success(success)
         } catch (e: Exception) {
             logger.error("Error following user $targetUserId", e)
             Result.failure(e)
         }
     }
 
-    fun unfollowUser(currentUserId: String, targetUserId: String): Result<User> {
+    fun unfollowUser(currentUserId: String, targetUserId: String): Result<Boolean> {
         return try {
-            // TODO: Implement unfollow logic
-            val user = userRepository.findById(targetUserId)
-                ?: return Result.failure(Exception("User not found"))
-            Result.success(user)
+            if(currentUserId == targetUserId) return Result.failure(Exception("Cannot unfollow yourself"))
+
+            userRepository.existById(currentUserId).let {
+                if(!it) return Result.failure(Exception("User not found"))
+            }
+
+            userRepository.existById(targetUserId).let {
+                if(!it) return Result.failure(Exception("User not found"))
+            }
+
+            if(!userRepository.isFollowing(targetUserId, currentUserId)) {
+                return Result.success(true)
+            }
+
+            val success = userRepository.unfollow(
+                targetId = targetUserId,
+                followerId = currentUserId
+            )
+
+            Result.success(success)
         } catch (e: Exception) {
             logger.error("Error unfollowing user $targetUserId", e)
             Result.failure(e)

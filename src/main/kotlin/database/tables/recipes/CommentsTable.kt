@@ -9,5 +9,4 @@ object CommentsTable: LongIdTable("comments") {
     val userId = varchar("user_id", 64).references(UsersTable.id, onDelete = ReferenceOption.CASCADE)
     val content = text("content")
     val createdAt = long("created_at")
-    val updatedAt = long("updated_at")
 }

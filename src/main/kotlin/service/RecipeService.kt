@@ -1,6 +1,8 @@
 package com.sukakotlin.service
 
+import com.sukakotlin.model.CommentWithImage
 import com.sukakotlin.model.Image
+import com.sukakotlin.model.ImageData
 import com.sukakotlin.model.IngredientTag
 import com.sukakotlin.model.IngredientWithTag
 import com.sukakotlin.model.Recipe
@@ -50,7 +52,7 @@ class RecipeService(
 
     fun getRecipeDetail(recipeId: Long, currentUserId: String): Result<RecipeDetail> {
         return try {
-            val recipeDetail = recipesRepository.findRecipeDetail(recipeId)
+            val recipeDetail = recipesRepository.findRecipeDetail(recipeId, currentUserId)
                 ?: return Result.failure(Exception("Recipe not found"))
 
             // Check access: public atau milik user
@@ -88,25 +90,19 @@ class RecipeService(
         description: String?,
         isPublic: Boolean,
         estTimeInMinutes: Int,
-        portion: Int,
-        status: RecipeStatus
+        portion: Int
     ): Result<RecipeWithImages> {
         return try {
             // Verify ownership
-            recipesRepository.findByIdAndAuthorId(recipeId, userId)
+            val recipe = recipesRepository.findByIdAndAuthorId(recipeId, userId)
                 ?: return Result.failure(Exception("Recipe not found or you don't own it"))
 
-            val updatedRecipe = Recipe(
-                id = recipeId,
-                authorId = userId,
+            val updatedRecipe = recipe.copy(
                 name = name,
                 description = description,
                 isPublic = isPublic,
                 estTimeInMinutes = estTimeInMinutes,
                 portion = portion,
-                status = status,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
             )
 
             val result = recipesRepository.update(recipeId, updatedRecipe)
@@ -123,15 +119,17 @@ class RecipeService(
     fun searchRecipes(
         query: String,
         userId: String,
-        minEstTimeInMinutes: Int? = null,
-        maxEstTimeInMinutes: Int? = null
+        minRating: Double? = null,
+        minEstTime: Int? = null,
+        maxEstTime: Int? = null
     ): Result<List<RecipeDetail>> {
         return try {
             val recipes = recipesRepository.searchFiltered(
                 query = query,
                 userId = userId,
-                minEstTimeInMinutes = minEstTimeInMinutes,
-                maxEstTimeInMinutes = maxEstTimeInMinutes
+                minRating = minRating,
+                minEstTime = minEstTime,
+                maxEstTime = maxEstTime
             )
             Result.success(recipes)
         } catch (e: Exception) {
@@ -140,7 +138,7 @@ class RecipeService(
         }
     }
 
-    suspend fun uploadRecipeImage(userId: String, recipeId: Long, imageData: com.sukakotlin.model.ImageData): Result<RecipeWithImages> {
+    suspend fun uploadRecipeImage(userId: String, recipeId: Long, imageData: ImageData): Result<RecipeWithImages> {
         return try {
             // Verify ownership
             recipesRepository.findByIdAndAuthorId(recipeId, userId)
@@ -168,7 +166,7 @@ class RecipeService(
         userId: String,
         recipeId: Long,
         stepId: Long,
-        imageData: com.sukakotlin.model.ImageData
+        imageData: ImageData
     ): Result<List<StepWithImages>> {
         return try {
             // Verify ownership
@@ -303,5 +301,119 @@ class RecipeService(
             logger.error("Error updating step: $stepId for recipe: $recipeId", e)
             Result.failure(e)
         }
+    }
+
+    suspend fun addComment(
+        userId: String,
+        recipeId: Long,
+        content: String,
+        imageData: ImageData?
+    ): Result<CommentWithImage> = try {
+        var imageUrl: String? = null
+        if(imageData != null) {
+            imageUrl = storageService.uploadCommentImage(userId, recipeId, imageData)
+        }
+
+        val result = recipesRepository.addComment(
+            recipeId = recipeId,
+            userId = userId,
+            content = content,
+            imageUrl = imageUrl
+        )
+        logger.info("Added comment to recipe: $recipeId by user: $userId")
+        Result.success(result)
+    } catch (e: Exception) {
+        logger.error("Error adding comment to recipe: $recipeId", e)
+        Result.failure(e)
+    }
+
+    fun deleteComment(commentId: Long, userId: String, recipeId: Long): Result<Boolean> {
+        return try {
+            val comments = recipesRepository.getCommentWithImage(recipeId)
+            val comment = comments.find { it.id == commentId }
+                ?: return Result.failure(Exception("Comment not found"))
+
+            if (comment.authorId != userId) {
+                return Result.failure(Exception("You can only delete your own comments"))
+            }
+
+            val result = recipesRepository.deleteComment(commentId)
+            logger.info("Deleted comment: $commentId by user: $userId")
+            Result.success(result)
+        } catch (e: Exception) {
+            logger.error("Error deleting comment: $commentId", e)
+            Result.failure(e)
+        }
+    }
+
+    fun getRecipeComments(recipeId: Long): Result<List<CommentWithImage>> {
+        return try {
+            val comments = recipesRepository.getCommentWithImage(recipeId)
+            Result.success(comments)
+        } catch (e: Exception) {
+            logger.error("Error getting comments for recipe: $recipeId", e)
+            Result.failure(e)
+        }
+    }
+
+    // ============ RATING OPERATIONS ============
+
+    fun rateRecipe(userId: String, recipeId: Long, value: Double): Result<Unit> {
+        return try {
+            if (value !in 0.0..5.0) {
+                return Result.failure(Exception("Rating must be between 0 and 5"))
+            }
+
+            recipesRepository.addOrUpdateRating(recipeId, userId, value)
+            logger.info("User: $userId rated recipe: $recipeId with value: $value")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error("Error rating recipe: $recipeId for user: $userId", e)
+            Result.failure(e)
+        }
+    }
+
+    fun removeRating(userId: String, recipeId: Long): Result<Unit> {
+        return try {
+            recipesRepository.deleteRating(recipeId, userId)
+            logger.info("User: $userId removed rating for recipe: $recipeId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logger.error("Error removing rating for recipe: $recipeId", e)
+            Result.failure(e)
+        }
+    }
+
+    private fun isAuthor(recipeId: Long, userId: String): Boolean = recipesRepository.existsByIdAndAuthorId(recipeId, userId)
+
+    // =============== BOOKMARK ============
+    fun saveRecipe(userId: String, recipeId: Long): Result<Boolean> {
+        return try {
+            if(isAuthor(recipeId, userId)) throw Exception("You can't save your own recipe")
+
+            val isFavorited = recipesRepository.isFavorited(recipeId = recipeId, userId = userId)
+            if(!isFavorited) recipesRepository.addToBookmark(recipeId = recipeId, userId = userId)
+            Result.success(true)
+        } catch (e: Exception) {
+            logger.error("Error in Save Recipe", e)
+            Result.failure(e)
+        }
+    }
+
+    fun removeSavedRecipe(userId: String, recipeId: Long): Result<Boolean> = try {
+        recipesRepository.deleteFromBookmark(recipeId = recipeId, userId = userId)
+        Result.success(true)
+    } catch (e: Exception) {
+        logger.error("Error in Remove Recipe", e)
+        Result.failure(e)
+    }
+
+    fun getSavedRecipes(userId: String): Result<List<RecipeDetail>> = try {
+        val details = recipesRepository.getUserFavorites(userId)
+
+        Result.success(details)
+    } catch (e: Exception) {
+        logger.error("Error retrieving recipes", e)
+        Result.failure(e)
     }
 }

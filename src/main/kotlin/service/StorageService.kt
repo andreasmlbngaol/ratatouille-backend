@@ -44,6 +44,14 @@ class StorageService(
         return uploadImage(userId, imageData, "recipe-$recipeId/step-$stepId", quality = 0.5f)
     }
 
+    suspend fun uploadCommentImage(
+        userId: String,
+        recipeId: Long,
+        imageData: ImageData
+    ): String {
+        return uploadImage(userId, imageData, "recipe-$recipeId/comments", quality = 0.7f)
+    }
+
     private suspend fun uploadProfileImage(
         userId: String,
         imageData: ImageData,

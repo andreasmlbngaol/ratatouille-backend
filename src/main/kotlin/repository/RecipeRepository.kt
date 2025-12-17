@@ -1,35 +1,44 @@
 package com.sukakotlin.repository
 
+import com.sukakotlin.database.tables.recipes.BookmarksTable
+import com.sukakotlin.database.tables.recipes.CommentsImagesTable
+import com.sukakotlin.database.tables.recipes.CommentsTable
 import com.sukakotlin.database.tables.recipes.ImagesTable
 import com.sukakotlin.database.tables.recipes.IngredientTagsTable
 import com.sukakotlin.database.tables.recipes.IngredientsTable
+import com.sukakotlin.database.tables.recipes.RatingsTable
 import com.sukakotlin.database.tables.recipes.RecipesImagesTable
 import com.sukakotlin.database.tables.recipes.RecipesTable
 import com.sukakotlin.database.tables.recipes.StepsImagesTable
 import com.sukakotlin.database.tables.recipes.StepsTable
 import com.sukakotlin.database.utils.ilikeContains
+import com.sukakotlin.model.CommentWithImage
 import com.sukakotlin.model.Image
 import com.sukakotlin.model.IngredientTag
 import com.sukakotlin.model.IngredientWithTag
 import com.sukakotlin.model.Recipe
 import com.sukakotlin.model.RecipeDetail
+import com.sukakotlin.model.RecipeRating
 import com.sukakotlin.model.RecipeStatus
 import com.sukakotlin.model.RecipeWithImages
 import com.sukakotlin.model.StepWithImages
 import com.sukakotlin.utils.uppercaseEachWord
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.jdbc.andWhere
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.slf4j.LoggerFactory
 
 class RecipeRepository {
-    private val logger = LoggerFactory.getLogger(this::class.java)
+//    private val logger = LoggerFactory.getLogger(this::class.java)
 
     // ============ MAPPING FUNCTIONS ============
 
@@ -50,6 +59,25 @@ class RecipeRepository {
         return Image(
             id = this[ImagesTable.id].value,
             url = this[ImagesTable.url],
+        )
+    }
+
+    private fun ResultRow.toCommentWithImage(): CommentWithImage {
+        val commentId = this[CommentsTable.id].value
+
+        val image = (CommentsImagesTable innerJoin ImagesTable)
+            .selectAll()
+            .where { CommentsImagesTable.commentId eq commentId }
+            .singleOrNull()
+            ?.toImage()
+
+        return CommentWithImage(
+            id = commentId,
+            recipeId = this[CommentsTable.recipeId],
+            authorId = this[CommentsTable.userId],
+            content = this[CommentsTable.content],
+            createdAt = this[CommentsTable.createdAt],
+            image = image
         )
     }
 
@@ -178,7 +206,7 @@ class RecipeRepository {
             .count() > 0
     }
 
-    fun findRecipeDetail(id: Long): RecipeDetail? = transaction {
+    fun findRecipeDetail(id: Long, userId: String): RecipeDetail? = transaction {
         val recipe = RecipesTable
             .selectAll()
             .where { RecipesTable.id eq id }
@@ -188,6 +216,10 @@ class RecipeRepository {
         val images = getRecipeImages(id)
         val ingredients = getRecipeIngredients(id)
         val steps = getRecipeSteps(id)
+        val comments = getCommentWithImage(id)
+        val rating = getRecipeRating(id)
+        val isFavorited = if(userId == recipe.authorId) null else isFavorited(id, userId)
+        val favoriteCount = getFavorite(id)
 
         RecipeDetail(
             recipe = RecipeWithImages(
@@ -204,15 +236,28 @@ class RecipeRepository {
                 images = images
             ),
             ingredients = ingredients,
-            steps = steps
+            steps = steps,
+            comments = comments,
+            rating = rating,
+            isFavorited = isFavorited,
+            favoriteCount = favoriteCount
         )
+    }
+
+    fun findAllDetailByAuthorId(authorId: String) = transaction {
+        RecipesTable
+            .select(RecipesTable.id)
+            .where { RecipesTable.authorId eq authorId }
+            .map { it[RecipesTable.id].value }
+            .mapNotNull { findRecipeDetail(it, authorId) }
     }
 
     fun searchFiltered(
         query: String,
         userId: String,
-        minEstTimeInMinutes: Int? = null,
-        maxEstTimeInMinutes: Int? = null
+        minRating: Double? = null,
+        minEstTime: Int? = null,
+        maxEstTime: Int? = null
     ): List<RecipeDetail> = transaction {
         var baseQuery = RecipesTable
             .selectAll()
@@ -221,12 +266,12 @@ class RecipeRepository {
                         (RecipesTable.status eq RecipeStatus.PUBLISHED)
             }
 
-        if (minEstTimeInMinutes != null) {
-            baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes greaterEq minEstTimeInMinutes }
+        if (minEstTime != null) {
+            baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes greaterEq minEstTime }
         }
 
-        if (maxEstTimeInMinutes != null) {
-            baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes lessEq maxEstTimeInMinutes }
+        if (maxEstTime != null) {
+            baseQuery = baseQuery.andWhere { RecipesTable.estTimeInMinutes lessEq maxEstTime }
         }
 
         baseQuery
@@ -242,6 +287,10 @@ class RecipeRepository {
                 val images = getRecipeImages(recipe.id)
                 val ingredients = getRecipeIngredients(recipe.id)
                 val steps = getRecipeSteps(recipe.id)
+                val comments = getCommentWithImage(recipe.id)
+                val rating = getRecipeRating(recipe.id)
+                val isFavorited = isFavorited(recipe.id, recipe.authorId)
+                val favoriteCount = getFavorite(recipe.id)
 
                 RecipeDetail(
                     recipe = RecipeWithImages(
@@ -258,8 +307,15 @@ class RecipeRepository {
                         images = images
                     ),
                     ingredients = ingredients,
-                    steps = steps
-                )
+                    steps = steps,
+                    comments = comments,
+                    rating = rating,
+                    isFavorited = isFavorited,
+                    favoriteCount = favoriteCount
+                ).takeIf {
+                    if (minRating != null) it.rating.average >= minRating
+                    else true
+                }
             }
     }
 
@@ -373,5 +429,121 @@ class RecipeRepository {
             .where { StepsTable.recipeId eq recipeId }
             .orderBy(StepsTable.stepNumber)
             .map { it.toStepWithImages() }
+    }
+
+    // Comments
+    fun addComment(recipeId: Long, userId: String, content: String, imageUrl: String?): CommentWithImage = transaction {
+        val commentId = CommentsTable.insertAndGetId {
+            it[CommentsTable.recipeId] = recipeId
+            it[CommentsTable.userId] = userId
+            it[CommentsTable.content] = content
+            it[CommentsTable.createdAt] = System.currentTimeMillis()
+        }.value
+
+        var image: Image? = null
+        if (imageUrl != null) {
+            val imageId = ImagesTable.insertAndGetId {
+                it[ImagesTable.url] = imageUrl
+            }.value
+
+            CommentsImagesTable.insertAndGetId {
+                it[CommentsImagesTable.commentId] = commentId
+                it[CommentsImagesTable.imageId] = imageId
+            }
+
+            image = Image(id = imageId, url = imageUrl)
+        }
+
+        CommentWithImage(
+            id = commentId,
+            recipeId = recipeId,
+            authorId = userId,
+            content = content,
+            createdAt = System.currentTimeMillis(),
+            image = image
+        )
+    }
+
+    fun deleteComment(commentId: Long): Boolean = transaction {
+        CommentsTable.deleteWhere { CommentsTable.id eq commentId } > 0
+    }
+
+    fun getCommentWithImage(recipeId: Long): List<CommentWithImage> = transaction {
+        CommentsTable
+            .selectAll()
+            .where { CommentsTable.recipeId eq recipeId }
+            .map { it.toCommentWithImage() }
+    }
+
+    // Rating
+    fun addOrUpdateRating(recipeId: Long, userId: String, value: Double): Unit = transaction {
+        RatingsTable.deleteWhere {
+            (RatingsTable.recipeId eq recipeId) and (RatingsTable.userId eq userId)
+        }
+
+        RatingsTable.insert {
+            it[RatingsTable.recipeId] = recipeId
+            it[RatingsTable.userId] = userId
+            it[RatingsTable.value] = value
+        }
+    }
+
+    fun deleteRating(recipeId: Long, userId: String): Unit = transaction {
+        RatingsTable.deleteWhere {
+            (RatingsTable.recipeId eq recipeId) and (RatingsTable.userId eq userId)
+        }
+    }
+
+    private fun getRecipeRating(recipeId: Long): RecipeRating = transaction {
+        val ratings = RatingsTable
+            .selectAll()
+            .where { RatingsTable.recipeId eq recipeId }
+            .map { it[RatingsTable.value] }
+
+        val average = if (ratings.isNotEmpty()) ratings.average() else 0.0
+        val count = ratings.size
+
+        RecipeRating(
+            average = average,
+            count = count
+        )
+    }
+
+    fun isFavorited(recipeId: Long, userId: String): Boolean = transaction {
+        BookmarksTable
+            .select(BookmarksTable.id)
+            .where { BookmarksTable.recipeId eq recipeId }
+            .andWhere { BookmarksTable.userId eq userId }
+            .count() > 0
+    }
+
+    fun getFavorite(recipeId: Long) = transaction {
+        BookmarksTable
+            .select(BookmarksTable.id)
+            .where { BookmarksTable.recipeId eq recipeId }
+            .count()
+    }
+
+    fun addToBookmark(recipeId: Long, userId: String): Boolean = transaction {
+        BookmarksTable.insertAndGetId {
+            it[BookmarksTable.userId] = userId
+            it[BookmarksTable.recipeId] = recipeId
+        }.value > 0
+    }
+
+    fun deleteFromBookmark(recipeId: Long, userId: String): Unit = transaction {
+        BookmarksTable.deleteWhere { (BookmarksTable.userId eq userId) and (BookmarksTable.recipeId eq recipeId) }
+    }
+
+    fun getUserFavorites(userId: String) = transaction {
+        val favIds = BookmarksTable
+            .select(BookmarksTable.recipeId)
+            .where { BookmarksTable.userId eq userId }
+            .orderBy(BookmarksTable.id to SortOrder.DESC)
+            .map { it[BookmarksTable.recipeId] }
+
+        favIds.mapNotNull { recipeId ->
+            findRecipeDetail(recipeId, userId)
+        }
     }
 }
