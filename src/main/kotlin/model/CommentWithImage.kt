@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class CommentWithImage(
     val id: Long,
     val recipeId: Long,
-    val authorId: String,
+    val author: User,
     val content: String,
     val createdAt: Long,
     val image: Image?

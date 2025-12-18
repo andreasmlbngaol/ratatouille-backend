@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RecipeDetail(
+    val author: User,
     val recipe: RecipeWithImages,
     val ingredients: List<IngredientWithTag>,
     val steps: List<StepWithImages>,

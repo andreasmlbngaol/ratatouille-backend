@@ -90,6 +90,14 @@ fun Route.recipeRoutes() {
                 )
             }
 
+            get("/me") {
+                val userId = call.userId!!
+                recipeService.findAllDetailByAuthorId(userId).fold(
+                    onSuccess = { call.respond(it) },
+                    onFailure = { call.respondFailure(it) }
+                )
+            }
+
             get("/drafts") {
                 val userId = call.userId!!
                 recipeService.getOrCreateDraft(userId).fold(
@@ -98,26 +106,28 @@ fun Route.recipeRoutes() {
                 )
             }
 
-            get("/ingredient-tags") {
-                val query = call.request.queryParameters["query"]
-                    ?: return@get call.respond(
-                        HttpStatusCode.BadRequest,
-                        "Missing 'query' parameter"
+            route("/ingredient-tags") {
+                get {
+                    val query = call.request.queryParameters["query"]
+                        ?: return@get call.respond(
+                            HttpStatusCode.BadRequest,
+                            "Missing 'query' parameter"
+                        )
+
+                    recipeService.searchIngredientTags(query).fold(
+                        onSuccess = { call.respond(it) },
+                        onFailure = { call.respondFailure(it) }
                     )
+                }
 
-                recipeService.searchIngredientTags(query).fold(
-                    onSuccess = { call.respond(it) },
-                    onFailure = { call.respondFailure(it) }
-                )
-            }
+                post {
+                    val payload = call.receive<IngredientTagRequest>()
 
-            post("/ingredient-tags") {
-                val payload = call.receive<IngredientTagRequest>()
-
-                recipeService.getOrCreateIngredientTag(payload.name.trim()).fold(
-                    onSuccess = { call.respond(it) },
-                    onFailure = { call.respondFailure(it) }
-                )
+                    recipeService.getOrCreateIngredientTag(payload.name.trim().uppercase()).fold(
+                        onSuccess = { call.respond(it) },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
             }
 
             route("/{recipeId}") {
@@ -129,11 +139,7 @@ fun Route.recipeRoutes() {
                             "Invalid Recipe ID"
                         )
 
-                    println("Test")
-
                     val payload = call.receive<UpdateRecipeStatusRequest>()
-
-                    println("Test 2")
 
                     recipeService.updateRecipeStatus(
                         userId = userId,

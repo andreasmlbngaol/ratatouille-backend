@@ -33,7 +33,7 @@ class RecipeService(
                 authorId = userId,
                 name = "",
                 description = null,
-                isPublic = false,
+                isPublic = true,
                 estTimeInMinutes = 1,
                 portion = 1,
                 status = RecipeStatus.DRAFT,
@@ -194,7 +194,7 @@ class RecipeService(
     fun getOrCreateIngredientTag(name: String): Result<IngredientTag> {
         return try {
             // Search if exists
-            val existing = ingredientTagsRepository.searchByName(name).firstOrNull()
+            val existing = ingredientTagsRepository.searchByNameExact(name)
             if (existing != null) {
                 return Result.success(existing)
             }
@@ -333,7 +333,7 @@ class RecipeService(
             val comment = comments.find { it.id == commentId }
                 ?: return Result.failure(Exception("Comment not found"))
 
-            if (comment.authorId != userId) {
+            if (comment.author.id != userId) {
                 return Result.failure(Exception("You can only delete your own comments"))
             }
 
@@ -440,5 +440,14 @@ class RecipeService(
             logger.error("Error fridge filtering recipes for user: $userId", e)
             Result.failure(e)
         }
+    }
+
+    fun findAllDetailByAuthorId(authorId: String): Result<List<RecipeDetail>> = try {
+        Result.success(
+            recipesRepository.findAllDetailByAuthorId(authorId)
+        )
+    } catch (e: Exception) {
+        logger.error("Error retrieving recipes by author id: $authorId", e)
+        Result.failure(e)
     }
 }

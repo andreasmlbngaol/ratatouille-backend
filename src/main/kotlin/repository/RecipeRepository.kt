@@ -22,6 +22,7 @@ import com.sukakotlin.model.RecipeRating
 import com.sukakotlin.model.RecipeStatus
 import com.sukakotlin.model.RecipeWithImages
 import com.sukakotlin.model.StepWithImages
+import com.sukakotlin.model.emptyUser
 import com.sukakotlin.utils.uppercaseEachWord
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -41,7 +42,9 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 
-class RecipeRepository {
+class RecipeRepository(
+    private val userRepository: UserRepository
+) {
 //    private val logger = LoggerFactory.getLogger(this::class.java)
 
     // ============ MAPPING FUNCTIONS ============
@@ -74,11 +77,13 @@ class RecipeRepository {
             .where { CommentsImagesTable.commentId eq commentId }
             .singleOrNull()
             ?.toImage()
+        val author = userRepository.findById(this[CommentsTable.userId])
+            ?: emptyUser.copy(name = "Deleted User")
 
         return CommentWithImage(
             id = commentId,
             recipeId = this[CommentsTable.recipeId],
-            authorId = this[CommentsTable.userId],
+            author = author,
             content = this[CommentsTable.content],
             createdAt = this[CommentsTable.createdAt],
             image = image
@@ -217,6 +222,7 @@ class RecipeRepository {
             .singleOrNull()
             ?.toRecipe() ?: return@transaction null
 
+        val author = userRepository.findById(recipe.authorId) ?: return@transaction null
         val images = getRecipeImages(id)
         val ingredients = getRecipeIngredients(id)
         val steps = getRecipeSteps(id)
@@ -227,6 +233,7 @@ class RecipeRepository {
         val favoriteCount = getFavorite(id)
 
         RecipeDetail(
+            author = author,
             recipe = RecipeWithImages(
                 id = recipe.id,
                 authorId = recipe.authorId,
@@ -253,6 +260,7 @@ class RecipeRepository {
         RecipesTable
             .select(RecipesTable.id)
             .where { RecipesTable.authorId eq authorId }
+            .andWhere { RecipesTable.status eq RecipeStatus.PUBLISHED }
             .map { it[RecipesTable.id].value }
             .mapNotNull { findRecipeDetail(it, authorId) }
     }
@@ -283,7 +291,7 @@ class RecipeRepository {
         }
 
         // Jika ada minRating filter, ambil recipe IDs yang match
-        var recipeIds: List<Long>? = null
+        var recipeIds: List<Long>?
         if (minRating != null) {
             // Query ratings dan grouping di memory
             recipeIds = RatingsTable
@@ -314,6 +322,7 @@ class RecipeRepository {
             .mapNotNull { recipeRow ->
                 val recipe = recipeRow.toRecipe()
 
+                val author = userRepository.findById(recipe.authorId) ?: return@mapNotNull null
                 val images = getRecipeImages(recipe.id)
                 val ingredients = getRecipeIngredients(recipe.id)
                 val steps = getRecipeSteps(recipe.id)
@@ -323,6 +332,7 @@ class RecipeRepository {
                 val favoriteCount = getFavorite(recipe.id)
 
                 RecipeDetail(
+                    author = author,
                     recipe = RecipeWithImages(
                         id = recipe.id,
                         authorId = recipe.authorId,
@@ -483,10 +493,12 @@ class RecipeRepository {
             image = Image(id = imageId, url = imageUrl)
         }
 
+        val author = userRepository.findById(userId) ?: error("User not found")
+
         CommentWithImage(
             id = commentId,
             recipeId = recipeId,
-            authorId = userId,
+            author = author,
             content = content,
             createdAt = now,
             image = image
@@ -616,22 +628,15 @@ class RecipeRepository {
             }
         }
 
-        // ===== INCLUDED TAGS (HARUS ADA SEMUA) =====
+        // ===== INCLUDED TAGS (MINIMAL ADA SATU) =====
         if (includedIngredientTags.isNotEmpty()) {
-            val tagCount = IngredientsTable.tagId.countDistinct().alias("tag_count")
-
             val includedRecipeIds = IngredientsTable
-                .selectAll()
+                .select(IngredientsTable.recipeId)
                 .where {
                     IngredientsTable.tagId inList includedIngredientTags
                 }
-                .groupBy(IngredientsTable.recipeId)
-                .mapNotNull {
-                    val count = it[tagCount]
-                    val recipeId = it[IngredientsTable.recipeId]
-
-                    if (count == includedIngredientTags.size.toLong()) recipeId else null
-                }
+                .map { it[IngredientsTable.recipeId] }
+                .distinct()
 
             if (includedRecipeIds.isEmpty()) return@transaction emptyList()
 
@@ -643,7 +648,7 @@ class RecipeRepository {
         // ===== EXCLUDED TAGS (TIDAK BOLEH ADA) =====
         if (excludedIngredientTags.isNotEmpty()) {
             val excludedRecipeIds = IngredientsTable
-                .selectAll()
+                .select(IngredientsTable.recipeId)
                 .where {
                     IngredientsTable.tagId inList excludedIngredientTags
                 }
@@ -663,12 +668,11 @@ class RecipeRepository {
             val minRatingBd = minRating.toBigDecimal()
 
             val ratedRecipeIds = RatingsTable
-                .selectAll()
+                .select(RatingsTable.recipeId, avgRating)
                 .groupBy(RatingsTable.recipeId)
                 .mapNotNull { row ->
-                    val avg = row[avgRating]          // BigDecimal?
+                    val avg = row[avgRating]
                     val recipeId = row[RatingsTable.recipeId]
-
                     if (avg != null && avg >= minRatingBd) recipeId else null
                 }
 

@@ -125,8 +125,6 @@ class UserService(
 
     fun getUserDetail(targetUserId: String, currentUserId: String): Result<UserDetail> {
         return try {
-            println("$targetUserId, $currentUserId")
-
             val user = userRepository.findById(id = targetUserId)
                 ?: return Result.failure(Exception("User not found"))
 

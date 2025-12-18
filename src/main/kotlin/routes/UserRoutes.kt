@@ -35,6 +35,15 @@ fun Route.userRoutes() {
 
             route("/me") {
                 get {
+                    val currentUserId = call.userId!!
+
+                    userService.getUserDetail(currentUserId, currentUserId).fold(
+                        onSuccess = { call.respond(it) },
+                        onFailure = { call.respondFailure(it) }
+                    )
+                }
+
+                post {
                     val idToken = call.idToken!!
                     val result = userService.getOrCreateUser(idToken)
                     result.fold(

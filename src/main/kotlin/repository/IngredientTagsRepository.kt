@@ -22,7 +22,7 @@ class IngredientTagsRepository {
     fun save(tag: IngredientTag): IngredientTag = transaction {
         try {
             val id = IngredientTagsTable.insertAndGetId {
-                it[name] = tag.name.uppercaseEachWord()
+                it[name] = tag.name.uppercase()
             }
 
             IngredientTag(
@@ -42,6 +42,14 @@ class IngredientTagsRepository {
             .orderBy(IngredientTagsTable.name to SortOrder.ASC)
             .limit(8)
             .map { it.toIngredientTag() }
+    }
+
+    fun searchByNameExact(name: String): IngredientTag? = transaction {
+        IngredientTagsTable
+            .selectAll()
+            .where { IngredientTagsTable.name eq name }
+            .singleOrNull()
+            ?.toIngredientTag()
     }
 
     fun findById(id: Long): IngredientTag? = transaction {

@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 object RecipesTable: LongIdTable("recipes") {
     val authorId = varchar("author_id", 64).references(UsersTable.id, onDelete = ReferenceOption.CASCADE)
     val name = varchar("name", 50)
-    val description = varchar("description", 100).nullable()
+    val description = varchar("description", 512).nullable()
     val isPublic = bool("is_public")
     val estTimeInMinutes = integer("est_time_in_minutes")
     val portion = integer("portion").default(1)
